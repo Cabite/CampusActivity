@@ -1,23 +1,70 @@
+<template>
+  <Button
+    :variant="variant"
+    :size="size"
+    :disabled="disabled || loading"
+    :as="as"
+    :as-child="asChild"
+    :class="buttonClass"
+  >
+
+    <span
+      class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-75"
+    >
+      <span
+        class="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out bg-gradient-to-r from-transparent via-white/25 to-transparent"
+      />
+    </span>
+
+    <!-- content -->
+    <span class="relative flex items-center justify-center gap-2">
+      <Loader2
+        v-if="loading"
+        class="h-4 w-4 animate-spin"
+      />
+
+      <component
+        :is="icon"
+        v-else-if="icon && iconPosition === 'left'"
+        class="h-4 w-4 transition-transform duration-200 group-hover:rotate-6"
+      />
+
+      <slot />
+
+      <component
+        :is="icon"
+        v-if="icon && iconPosition === 'right' && !loading"
+        class="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1"
+      />
+    </span>
+  </Button>
+</template>
+
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Loader2 } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import type { ButtonVariants } from '@/components/ui/button'
 
 interface Props {
-  // shadcn 原生属性
   variant?: ButtonVariants['variant']
   size?: ButtonVariants['size']
   as?: string
   asChild?: boolean
-  
-  // 扩展属性
+
   loading?: boolean
   disabled?: boolean
   fullWidth?: boolean
-  icon?: typeof Loader2
+
+  icon?: any
   iconPosition?: 'left' | 'right'
+
   rounded?: 'none' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'full'
+
+  glow?: boolean
+  glass?: boolean
+  animated?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -27,10 +74,12 @@ const props = withDefaults(defineProps<Props>(), {
   disabled: false,
   fullWidth: false,
   iconPosition: 'left',
-  rounded: '2xl'
+  rounded: '2xl',
+  glow: false,
+  glass: false,
+  animated: true
 })
 
-// 动态圆角类
 const roundedClass = computed(() => {
   const map = {
     none: 'rounded-none',
@@ -44,57 +93,73 @@ const roundedClass = computed(() => {
   return map[props.rounded]
 })
 
-// 完整宽度类
-const widthClass = computed(() => props.fullWidth ? 'w-full' : '')
+const widthClass = computed(() => {
+  return props.fullWidth ? 'w-full' : ''
+})
 
-// 带图标时的内边距调整（可选）
-const paddingClass = computed(() => {
-  if (props.icon && props.size === 'default') {
-    return 'px-4'
-  }
-  return ''
+const buttonClass = computed(() => {
+  return cn(
+    'group relative overflow-hidden', // 添加 group 类
+    roundedClass.value,
+    widthClass.value,
+
+    // base
+    'font-medium tracking-wide',
+    'transition-all duration-200 ease-out', // 从 300ms 降到 200ms
+    'select-none',
+
+    // interaction
+    props.animated && [
+      'hover:-translate-y-0.5',
+      'hover:scale-[1.02]',
+      'active:scale-[0.97]',
+    ],
+
+    // focus
+    'focus-visible:outline-none',
+    'focus-visible:ring-2',
+    'focus-visible:ring-primary/50',
+    'focus-visible:ring-offset-2',
+
+    // disabled
+    (props.disabled || props.loading) &&
+      'cursor-not-allowed opacity-60',
+
+    // glow
+    props.glow &&
+      !props.disabled &&
+      'shadow-[0_0_25px_rgba(99,102,241,0.35)] hover:shadow-[0_0_35px_rgba(99,102,241,0.5)]',
+
+    // glass
+    props.glass && [
+      'backdrop-blur-xl',
+      'bg-white/10',
+      'border border-white/20',
+      'hover:bg-white/20',
+      'hover:border-white/30'
+    ],
+
+    // default variant enhancement
+    props.variant === 'default' &&
+      !props.glass && [
+        'bg-gradient-to-r',
+        'from-primary',
+        'to-primary/80',
+        'hover:brightness-105', // 从 110% 降到 105%，更柔和
+        'shadow-md',
+        'hover:shadow-lg'
+      ],
+
+    // outline variant hover enhancement
+    props.variant === 'outline' && [
+      'hover:bg-primary/5',
+      'hover:border-primary/50'
+    ],
+
+    // ghost variant hover enhancement
+    props.variant === 'ghost' && [
+      'hover:bg-primary/5'
+    ]
+  )
 })
 </script>
-
-<template>
-  <Button
-    :variant="variant"
-    :size="size"
-    :disabled="disabled || loading"
-    :as="as"
-    :as-child="asChild"
-    :class="[
-      roundedClass,
-      widthClass,
-      paddingClass,
-      'font-medium transition-all duration-200',
-      'active:scale-95', // 点击微缩放效果
-      {
-        'cursor-not-allowed opacity-50': loading,
-        'shadow-lg': variant === 'default' && !disabled && !loading,
-      }
-    ]"
-  >
-    <!-- 左侧图标（加载中或自定义图标） -->
-    <Loader2
-      v-if="loading"
-      class="mr-2 h-4 w-4 animate-spin"
-    />
-    
-    <component
-      :is="icon"
-      v-else-if="icon && iconPosition === 'left'"
-      class="mr-2 h-4 w-4"
-    />
-
-    <!-- 按钮内容 -->
-    <slot />
-
-    <!-- 右侧图标 -->
-    <component
-      :is="icon"
-      v-if="icon && iconPosition === 'right' && !loading"
-      class="ml-2 h-4 w-4"
-    />
-  </Button>
-</template>
