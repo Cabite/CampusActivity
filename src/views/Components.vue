@@ -10,7 +10,7 @@
   <Topbar />
   <router-link to="/Components/AppButtonDisplay"><AppButton>AppButton</AppButton></router-link>
   <router-link to="/Components/AppCardDisplay"><AppButton>AppCard</AppButton></router-link>
-  <AppCard>
+  <AppCard variant="color-bg" color="rgb(250,250,250)">
     <div>
       <router-view />
     </div>

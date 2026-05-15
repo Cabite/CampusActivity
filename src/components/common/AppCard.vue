@@ -13,7 +13,10 @@ import { cn } from '@/lib/utils'
 
 interface Props {
   // 卡片变体
-  variant?: 'default' | 'glass' | 'outline' | 'elevated'
+  variant?: 'default' | 'outline' | 'color' | 'color-bg'
+  
+  // 颜色变体（当 variant="color" 或 "color-bg" 时使用）
+  color?: string // 支持 rgb(59,130,246) 或 #3b82f6 等格式
   
   // 圆角大小
   rounded?: 'none' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl'
@@ -24,10 +27,7 @@ interface Props {
   // 是否显示边框
   border?: boolean
   
-  // 是否可悬停（hover 效果）
-  hoverable?: boolean
-  
-  // 是否可点击
+  // 是否可点击（包含悬停效果）
   clickable?: boolean
   
   // 加载状态
@@ -46,9 +46,9 @@ const props = withDefaults(defineProps<Props>(), {
   rounded: '2xl',
   padding: 'md',
   border: false,
-  hoverable: false,
   clickable: false,
   loading: false,
+  color: 'rgb(99, 102, 241)' // 默认主色
 })
 
 const emit = defineEmits<{
@@ -85,26 +85,99 @@ const paddingClass = computed(() => {
 const variantClass = computed(() => {
   const map = {
     default: 'bg-card shadow-md',
-    glass: 'bg-white/10 backdrop-blur-xl shadow-lg',
-    outline: 'bg-transparent border-2',
-    elevated: 'bg-card shadow-xl hover:shadow-2xl transition-shadow'
+    outline: 'bg-transparent border-2 border-border',
+    color: 'bg-card shadow-md', // 左边框颜色变体
+    'color-bg': 'shadow-md' // 背景色变体，背景色通过内联样式设置
   }
   return map[props.variant]
+})
+
+// 背景色样式
+const bgColorStyle = computed(() => {
+  if (props.variant !== 'color-bg') return {}
+  
+  // 解析颜色值，提取 RGB 值用于生成半透明效果
+  let bgColor = props.color
+  let rgbValues = ''
+  
+  // 处理不同的颜色格式
+  if (props.color.startsWith('rgb')) {
+    rgbValues = props.color.match(/\d+/g)?.slice(0, 3).join(',') || ''
+  } else if (props.color.startsWith('#')) {
+    // 转换 hex 到 rgb
+    const hex = props.color.slice(1)
+    const r = parseInt(hex.slice(0, 2), 16)
+    const g = parseInt(hex.slice(2, 4), 16)
+    const b = parseInt(hex.slice(4, 6), 16)
+    rgbValues = `${r},${g},${b}`
+  } else {
+    // 尝试匹配颜色名称或其他格式，默认使用颜色值
+    rgbValues = props.color
+  }
+  
+  return {
+    backgroundColor: props.color,
+    // 添加半透明白色叠加层，让文字更清晰（可选）
+    // 如果需要更柔和的背景，可以使用以下方式：
+    // backgroundColor: `rgba(${rgbValues}, 0.1)`,
+    // borderLeft: `4px solid ${props.color}`
+  }
+})
+
+// 左边框样式
+const colorBorderStyle = computed(() => {
+  if (props.variant !== 'color') return {}
+  return {
+    borderLeft: `4px solid ${props.color}`,
+    borderLeftColor: props.color
+  }
+})
+
+// 文字颜色样式（当背景色较深时，自动使用白色文字）
+const textColorStyle = computed(() => {
+  if (props.variant !== 'color-bg') return {}
+  
+  // 简单的亮度计算，决定文字颜色
+  const getBrightness = (color: string) => {
+    let r, g, b
+    
+    if (color.startsWith('rgb')) {
+      const matches = color.match(/\d+/g)
+      if (matches) {
+        r = parseInt(matches[0])
+        g = parseInt(matches[1])
+        b = parseInt(matches[2])
+      }
+    } else if (color.startsWith('#')) {
+      const hex = color.slice(1)
+      r = parseInt(hex.slice(0, 2), 16)
+      g = parseInt(hex.slice(2, 4), 16)
+      b = parseInt(hex.slice(4, 6), 16)
+    } else {
+      return {} // 无法解析，使用默认颜色
+    }
+    
+    // 计算亮度
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000
+    return brightness > 128 ? { color: '#1a1a1a' } : { color: '#ffffff' }
+  }
+  
+  return getBrightness(props.color)
 })
 
 // 卡片主类
 const cardClass = computed(() => {
   return cn(
-    'relative', // 添加相对定位
+    'relative',
     'transition-all duration-200',
     roundedClass.value,
     variantClass.value,
     {
-      'border': props.border,
-      'border-border': props.border,
-      'border-none': !props.border,
-      'cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-xl': props.hoverable,
-      'cursor-pointer active:scale-98': props.clickable,
+      'border': props.border && props.variant !== 'outline' && props.variant !== 'color-bg',
+      'border-border': props.border && props.variant !== 'outline' && props.variant !== 'color-bg',
+      'border-none': !props.border && props.variant !== 'outline',
+      // clickable 同时控制悬浮和点击效果
+      'cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-xl active:scale-98': props.clickable,
     },
     props.class
   )
@@ -131,6 +204,7 @@ const handleClick = (event: MouseEvent) => {
 <template>
   <Card 
     :class="cardClass"
+    :style="[colorBorderStyle, bgColorStyle, textColorStyle]"
     @click="handleClick"
   >
     <!-- 加载遮罩 -->

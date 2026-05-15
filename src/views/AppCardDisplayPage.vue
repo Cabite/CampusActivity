@@ -1,6 +1,6 @@
 <!-- AppCardDisplayPage.vue - 完整展示页面 -->
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950 p-8">
+  <div class="min-h-screen bg-gradient-to-br p-8">
     <div class="mx-auto max-w-7xl">
       <!-- 页面标题 -->
       <div class="mb-8 text-center">
@@ -11,6 +11,7 @@
       <section class="mb-12">
         <p class="text-lg font-semibold mb-3">1. 基础用法</p>
         <p class="text-sm text-muted-foreground mb-4">&lt;AppCard&gt;</p>
+        <p class="text-sm text-muted-foreground mb-4">&lt;AppCard variant="outline"&gt;</p>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
           <AppCard>
             <div class="text-center py-6">
@@ -24,23 +25,40 @@
             <div class="text-center py-6">
               <div class="text-4xl mb-2">🎨</div>
               <h3 class="font-semibold mb-1">边框卡片</h3>
-              <p class="text-sm text-muted-foreground">带边框样式</p>
-            </div>
-          </AppCard>
-
-          <AppCard variant="glass">
-            <div class="text-center py-6">
-              <div class="text-4xl mb-2">✨</div>
-              <h3 class="font-semibold mb-1">毛玻璃卡片</h3>
-              <p class="text-sm text-muted-foreground">现代化毛玻璃效果</p>
+              <p class="text-sm text-muted-foreground">仅边框样式</p>
             </div>
           </AppCard>
         </div>
       </section>
 
-      <!-- 2. 不同圆角 -->
+      <!-- 2. 颜色卡片 -->
       <section class="mb-12">
-        <p class="text-lg font-semibold mb-3">2. 不同圆角</p>
+        <p class="text-lg font-semibold mb-3">2. 颜色卡片</p>
+        <p class="text-sm text-muted-foreground mb-4">&lt;AppCard variant="color-bg" color="rgb(59,130,246)"&gt;</p>
+        <p class="text-sm text-muted-foreground mb-4">&lt;AppCard variant="color" color="rgb(59,130,246)"&gt;</p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+          <AppCard variant="color-bg" color="rgb(59,130,246)">
+            <div class="text-center py-6">
+              <div class="text-4xl mb-2">🎨</div>
+              <h3 class="font-semibold mb-1">背景色自定义</h3>
+              <p class="text-sm">文字根据深浅自动变色</p>
+            </div>
+          </AppCard>
+
+          <AppCard variant="color" color="rgb(59,130,246)">
+            <div class="text-center py-6">
+              <div class="text-4xl mb-2">✨</div>
+              <h3 class="font-semibold mb-1">左边框色卡片</h3>
+              <p class="text-sm text-muted-foreground">根据左边框颜色进行分类的卡片</p>
+            </div>
+          </AppCard>
+        </div>
+      </section>
+
+      <!-- 3. 不同圆角 -->
+      <section class="mb-12">
+        <p class="text-lg font-semibold mb-3">3. 不同圆角</p>
         <p class="text-sm text-muted-foreground mb-4">&lt;AppCard rounded="..."&gt;</p>
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div>
@@ -70,40 +88,24 @@
         </div>
       </section>
 
-      <!-- 3. 悬停效果 -->
+      <!-- 4. 悬停效果 -->
       <section class="mb-12">
-        <p class="text-lg font-semibold mb-3">3. 悬停效果</p>
-        <p class="text-sm text-muted-foreground mb-4">&lt;AppCard hoverable&gt;</p>
+        <p class="text-lg font-semibold mb-3">4. 可点击卡片</p>
+        <p class="text-sm text-muted-foreground mb-4">&lt;AppCard clickable&gt;</p>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <AppCard hoverable>
-            <div class="text-center py-6">
-              <div class="text-3xl mb-2">🖱️</div>
-              <h3 class="font-semibold">悬停上浮</h3>
-              <p class="text-sm text-muted-foreground mt-1">鼠标悬停时卡片上浮</p>
-            </div>
-          </AppCard>
-
-          <AppCard variant="elevated">
-            <div class="text-center py-6">
-              <div class="text-3xl mb-2">📦</div>
-              <h3 class="font-semibold">高级阴影</h3>
-              <p class="text-sm text-muted-foreground mt-1">自带阴影增强效果</p>
-            </div>
-          </AppCard>
-
           <AppCard clickable @click="handleCardClick">
             <div class="text-center py-6">
-              <div class="text-3xl mb-2">👆</div>
-              <h3 class="font-semibold">可点击卡片</h3>
-              <p class="text-sm text-muted-foreground mt-1">点击触发事件</p>
+              <div class="text-3xl mb-2">🖱️</div>
+              <h3 class="font-semibold">点击触发事件</h3>
+              <p class="text-sm text-muted-foreground mt-1">鼠标悬停时卡片上浮</p>
             </div>
           </AppCard>
         </div>
       </section>
 
-      <!-- 4. 带标题和描述 -->
+      <!-- 5. 带标题和描述 -->
       <section class="mb-12">
-        <p class="text-lg font-semibold mb-3">4. 带标题和描述</p>
+        <p class="text-lg font-semibold mb-3">5. 带标题和描述</p>
         <p class="text-sm text-muted-foreground mb-4">&lt;AppCard title="..." description="..."&gt;</p>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <AppCard 
@@ -150,17 +152,11 @@
         </div>
       </section>
 
-      <!-- 5. 加载状态 -->
+      <!-- 6. 加载状态 -->
       <section class="mb-12">
-        <p class="text-lg font-semibold mb-3">5. 加载状态</p>
+        <p class="text-lg font-semibold mb-3">6. 加载状态</p>
         <p class="text-sm text-muted-foreground mb-4">&lt;AppCard loading&gt;</p>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <AppCard loading>
-            <div class="text-center py-8">
-              <p class="text-muted-foreground">内容加载中...</p>
-            </div>
-          </AppCard>
-
           <AppCard :loading="isLoading">
             <div class="text-center py-8">
               <div v-if="!isLoading">
@@ -175,9 +171,9 @@
         </div>
       </section>
 
-      <!-- 6. 复杂内容展示 -->
+      <!-- 7. 复杂内容展示 -->
       <section class="mb-12">
-        <p class="text-lg font-semibold mb-3">6. 复杂内容展示</p>
+        <p class="text-lg font-semibold mb-3">7. 复杂内容展示</p>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
           <!-- 用户卡片 -->
           <AppCard hoverable class="text-center">
@@ -195,7 +191,7 @@
           </AppCard>
 
           <!-- 统计数据卡片 -->
-          <AppCard variant="elevated">
+          <AppCard>
             <div class="flex items-center justify-between py-2">
               <div>
                 <p class="text-sm text-muted-foreground">总收入</p>
@@ -209,7 +205,7 @@
           </AppCard>
 
           <!-- 带底部按钮的卡片 -->
-          <AppCard hoverable>
+          <AppCard>
             <div class="space-y-3 py-2">
               <h3 class="font-semibold">升级到专业版</h3>
               <p class="text-sm text-muted-foreground">
@@ -221,9 +217,9 @@
         </div>
       </section>
 
-      <!-- 7. 带底部插槽 -->
+      <!-- 8. 带底部插槽 -->
       <section class="mb-12">
-        <p class="text-lg font-semibold mb-3">7. 带底部插槽</p>
+        <p class="text-lg font-semibold mb-3">8. 带底部插槽</p>
         <p class="text-sm text-muted-foreground mb-4">&lt;template #footer&gt;...&lt;/template&gt;</p>
         <AppCard>
           <div class="space-y-2 py-2">
@@ -238,37 +234,7 @@
           </template>
         </AppCard>
       </section>
-
-      <!-- 8. 组合展示 -->
-      <section>
-        <p class="text-lg font-semibold mb-3">8. 组合展示 - 仪表板风格</p>
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <AppCard class="text-center" hoverable>
-            <div class="py-4">
-              <div class="text-2xl font-bold text-primary">1,234</div>
-              <div class="text-sm text-muted-foreground">总用户数</div>
-            </div>
-          </AppCard>
-          <AppCard class="text-center" hoverable>
-            <div class="py-4">
-              <div class="text-2xl font-bold text-green-600">+23%</div>
-              <div class="text-sm text-muted-foreground">增长率</div>
-            </div>
-          </AppCard>
-          <AppCard class="text-center" hoverable>
-            <div class="py-4">
-              <div class="text-2xl font-bold text-blue-600">$12.4k</div>
-              <div class="text-sm text-muted-foreground">总收入</div>
-            </div>
-          </AppCard>
-          <AppCard class="text-center" hoverable>
-            <div class="py-4">
-              <div class="text-2xl font-bold text-purple-600">89%</div>
-              <div class="text-sm text-muted-foreground">满意度</div>
-            </div>
-          </AppCard>
-        </div>
-      </section>
+      
     </div>
   </div>
 </template>
