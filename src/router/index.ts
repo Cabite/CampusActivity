@@ -1,18 +1,32 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
-import AppButtonDisplay from '../pages/AppButtonDisplayPage.vue'
-import AppCardDisplay from '../pages/AppCardDisplayPage.vue'
+import Login from '@/views/LoginPage.vue'
+import AppButtonDisplay from '@/views/AppButtonDisplayPage.vue'
+import AppCardDisplay from '@/views/AppCardDisplayPage.vue'
+import Components from '@/views/Components.vue'
 
 const routes = [
   {
-    path: '/AppButtonDisplay',
-    name: 'AppButtonDisplay',
-    component: AppButtonDisplay
+    path: '/',
+    name: 'Login',
+    component: Login
   },
   {
-    path: '/AppCardDisplay',
-    name: 'AppCardDisplay',
-    component: AppCardDisplay
+    path: '/Components',
+    name: 'Components',
+    component: Components,
+    children: [
+      {
+        path: 'AppButtonDisplay',
+        name: 'AppButtonDisplay',
+        component: AppButtonDisplay
+      },
+      {
+        path: 'AppCardDisplay',
+        name: 'AppCardDisplay',
+        component: AppCardDisplay
+      }
+    ]
   }
 ]
 

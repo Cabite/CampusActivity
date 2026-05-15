@@ -1,4 +1,6 @@
 <template>
+  <!-- variant: primary/secondary/outline/ghost/destructive/link/blue -->
+  <!-- content -->
   <Button
     :variant="variant"
     :size="size"
@@ -42,13 +44,13 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Loader2 } from 'lucide-vue-next'
+import { Loader2 } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import type { ButtonVariants } from '@/components/ui/button'
 
 interface Props {
-  variant?: ButtonVariants['variant']
+  variant?: ButtonVariants['variant'] | 'blue'  // 添加 'blue' 类型
   size?: ButtonVariants['size']
   as?: string
   asChild?: boolean
@@ -99,13 +101,13 @@ const widthClass = computed(() => {
 
 const buttonClass = computed(() => {
   return cn(
-    'group relative overflow-hidden', // 添加 group 类
+    'group relative overflow-hidden',
     roundedClass.value,
     widthClass.value,
 
     // base
     'font-medium tracking-wide',
-    'transition-all duration-200 ease-out', // 从 300ms 降到 200ms
+    'transition-all duration-200 ease-out',
     'select-none',
 
     // interaction
@@ -128,7 +130,7 @@ const buttonClass = computed(() => {
     // glow
     props.glow &&
       !props.disabled &&
-      'shadow-[0_0_25px_rgba(99,102,241,0.35)] hover:shadow-[0_0_35px_rgba(99,102,241,0.5)]',
+      'shadow-[0_0_25px_rgba(59,130,246,0.35)] hover:shadow-[0_0_35px_rgba(59,130,246,0.5)]',
 
     // glass
     props.glass && [
@@ -139,13 +141,27 @@ const buttonClass = computed(() => {
       'hover:border-white/30'
     ],
 
+    // blue variant
+    props.variant === 'blue' && [
+      'bg-gradient-to-r',
+      'from-blue-600',
+      'to-blue-500',
+      'hover:from-blue-700',
+      'hover:to-blue-600',
+      'text-white',
+      'shadow-md',
+      'hover:shadow-lg',
+      'hover:brightness-105',
+      'border-none'
+    ],
+
     // default variant enhancement
     props.variant === 'default' &&
       !props.glass && [
         'bg-gradient-to-r',
         'from-primary',
         'to-primary/80',
-        'hover:brightness-105', // 从 110% 降到 105%，更柔和
+        'hover:brightness-105',
         'shadow-md',
         'hover:shadow-lg'
       ],

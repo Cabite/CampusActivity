@@ -95,6 +95,7 @@ const variantClass = computed(() => {
 // 卡片主类
 const cardClass = computed(() => {
   return cn(
+    'relative', // 添加相对定位
     'transition-all duration-200',
     roundedClass.value,
     variantClass.value,
@@ -135,7 +136,8 @@ const handleClick = (event: MouseEvent) => {
     <!-- 加载遮罩 -->
     <div 
       v-if="loading" 
-      class="absolute inset-0 flex items-center justify-center bg-background/50 rounded-inherit z-10"
+      class="absolute inset-0 flex items-center justify-center bg-background/50 z-10"
+      :class="roundedClass"
     >
       <div class="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
     </div>
