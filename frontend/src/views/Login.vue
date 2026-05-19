@@ -107,8 +107,7 @@ const handleLogin = async (values: any) => {
     if (res.data.code === 200) {
       localStorage.setItem('token', res.data.data.token)
       alert('登录成功')
-      // 跳转到首页或组件展示页
-      // router.push('/dashboard')
+      router.push('/dashboard')
     } else {
       alert(res.data.message || '登录失败')
     }

@@ -8,6 +8,7 @@ import AppDialogDisplay from '@/views/AppDialogDisplayPage.vue'
 import AppInputDisplay from '@/views/AppInputDisplayPage.vue'
 import AppFormDisplay from '@/views/AppFormDisplayPage.vue'
 import Components from '@/views/Components.vue'
+import Dashboard from '@/views/Dashboard.vue'
 
 const routes = [
   {
@@ -51,7 +52,12 @@ const routes = [
         component: AppFormDisplay
       }
     ]
-  }
+  },
+  {
+    path: '/Dashboard',
+    name: 'Dashboard',
+    component: Dashboard
+  },
 ]
 
 const router = createRouter({
