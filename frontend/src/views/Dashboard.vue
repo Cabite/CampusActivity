@@ -2,11 +2,10 @@
 import Topbar from '@/layouts/Topbar.vue'
 import Sidebar from '@/layouts/Sidebar.vue'
 import { ref } from 'vue'
+import router from '@/router'
 
 // 侧边栏引用
 const sidebarRef = ref()
-
-const router = useRouter()
 
 // 处理导航点击
 const handleNavClick = (item: any) => {

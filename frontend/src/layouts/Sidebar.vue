@@ -10,7 +10,7 @@ import {
   LogOut,
   Bell
 } from '@lucide/vue'
-import { AppSidebar } from '@/components'
+import { AppSidebar } from '@/components/layout'
 
 // 定义事件
 const emit = defineEmits<{
