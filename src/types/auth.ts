@@ -7,3 +7,15 @@ export interface LoginResponse {
     token: string
     role: string
 }
+
+export interface RegisterRequest {
+    username: string
+    email: string
+    phone?: string
+    password: string
+}
+
+export interface RegisterResponse {
+    token: string
+    role: string
+}

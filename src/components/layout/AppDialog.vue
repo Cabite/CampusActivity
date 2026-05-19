@@ -11,7 +11,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
-import AppButton from './AppButton.vue'
+import AppButton from '../common/AppButton.vue'
 
 interface Props {
   // 控制显示

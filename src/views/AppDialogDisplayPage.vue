@@ -1,6 +1,6 @@
 <!-- AppDialogDisplay.vue -->
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950 p-8">
+  <div class="min-h-screen p-8">
     <div class="mx-auto max-w-7xl">
       <!-- 页面标题 -->
       <div class="mb-8 text-center">
@@ -11,36 +11,27 @@
       <!-- 1. 基础用法 -->
       <section class="mb-10">
         <p class="text-lg font-semibold mb-2">1. 基础用法</p>
-        <p class="text-sm text-muted-foreground mb-3">&lt;AppDialog title="..." description="..."&gt;</p>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <p class="text-sm font-medium mb-1">基础对话框</p>
+            <p class="text-sm text-muted-foreground mb-3">&lt;AppDialog title="..." description="..."&gt;</p>
             <AppDialog 
               title="基础对话框" 
               description="这是一个简单的对话框示例"
             >
               <template #trigger>
-                <AppButton variant="default" size="sm" class="w-full">打开基础对话框</AppButton>
+                <AppButton variant="outline" size="sm" class="w-full">打开基础对话框</AppButton>
               </template>
               <p class="text-sm text-muted-foreground">这里是对话框的内容区域，可以放置任何内容。</p>
             </AppDialog>
           </div>
 
           <div>
-            <p class="text-sm font-medium mb-1">无描述对话框</p>
-            <AppDialog title="无描述对话框">
-              <template #trigger>
-                <AppButton variant="outline" size="sm" class="w-full">无描述对话框</AppButton>
-              </template>
-              <p class="text-sm text-muted-foreground">只有标题的对话框。</p>
-            </AppDialog>
-          </div>
-
-          <div>
             <p class="text-sm font-medium mb-1">自定义头部</p>
+            <p class="text-sm text-muted-foreground mb-3">&lt;template #header /&gt;</p>
             <AppDialog>
               <template #trigger>
-                <AppButton variant="ghost" size="sm" class="w-full">自定义头部</AppButton>
+                <AppButton variant="outline" size="sm" class="w-full">自定义头部</AppButton>
               </template>
               <template #header>
                 <div class="flex items-center gap-2">
@@ -54,6 +45,26 @@
                 </div>
               </template>
               <p class="text-sm">完全自定义头部内容的对话框。</p>
+            </AppDialog>
+          </div>
+
+          <div>
+            <p class="text-sm font-medium mb-1">自定义底部</p>
+            <p class="text-sm text-muted-foreground mb-3">&lt;template #header /&gt;</p>
+            <AppDialog title="自定义底部按钮">
+              <template #trigger>
+                <AppButton variant="outline" size="sm" class="w-full">自定义底部</AppButton>
+              </template>
+              <template #footer>
+                <div class="flex justify-between w-full">
+                  <AppButton variant="ghost" size="sm">帮助</AppButton>
+                  <div class="flex gap-2">
+                    <AppButton variant="outline" size="sm">取消</AppButton>
+                    <AppButton variant="default" size="sm">确认</AppButton>
+                  </div>
+                </div>
+              </template>
+              <p class="text-sm">完全自定义底部按钮区域的对话框。</p>
             </AppDialog>
           </div>
         </div>
@@ -125,10 +136,11 @@
       <!-- 3. 按钮变体 -->
       <section class="mb-10">
         <p class="text-lg font-semibold mb-2">3. 按钮变体</p>
-        <p class="text-sm text-muted-foreground mb-3">&lt;AppDialog confirmVariant="..." cancelVariant="..."&gt;</p>
+        <p class="text-sm text-muted-foreground mb-3">&lt;AppDialog confirmText="..." confirmVariant="..." cancelText="..." cancelVariant="..."&gt;</p>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <p class="text-sm font-medium mb-1">危险操作</p>
+            <p class="text-sm text-muted-foreground mb-3">&lt;AppDialog confirmVariant = "destructive"&gt;</p>
             <AppDialog 
               title="危险操作" 
               description="此操作不可撤销，请谨慎操作。"
@@ -144,6 +156,7 @@
 
           <div>
             <p class="text-sm font-medium mb-1">蓝色主题</p>
+            <p class="text-sm text-muted-foreground mb-3">&lt;AppDialog confirmVariant = "blue"&gt;</p>
             <AppDialog 
               title="蓝色主题对话框" 
               confirmVariant="blue"
@@ -153,34 +166,6 @@
                 <AppButton variant="blue" size="sm" class="w-full">蓝色主题</AppButton>
               </template>
               <p class="text-sm">使用蓝色按钮的对话框。</p>
-            </AppDialog>
-          </div>
-
-          <div>
-            <p class="text-sm font-medium mb-1">自定义按钮文字</p>
-            <AppDialog 
-              title="保存更改" 
-              confirmText="保存"
-              cancelText="取消"
-            >
-              <template #trigger>
-                <AppButton variant="outline" size="sm" class="w-full">自定义文字</AppButton>
-              </template>
-              <p class="text-sm">是否保存您所做的更改？</p>
-            </AppDialog>
-          </div>
-
-          <div>
-            <p class="text-sm font-medium mb-1">仅确认按钮</p>
-            <AppDialog 
-              title="提示" 
-              :showCancel="false"
-              confirmText="知道了"
-            >
-              <template #trigger>
-                <AppButton variant="outline" size="sm" class="w-full">仅确认</AppButton>
-              </template>
-              <p class="text-sm">这是一个只有确认按钮的提示对话框。</p>
             </AppDialog>
           </div>
         </div>
@@ -193,6 +178,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <p class="text-sm font-medium mb-1">禁止点击外部关闭</p>
+            <p class="text-sm text-muted-foreground mb-3">&lt;AppDialog :close-on-click-outside="false"&gt;</p>
             <AppDialog 
               title="点击外部不关闭" 
               :close-on-click-outside="false"
@@ -207,6 +193,7 @@
 
           <div>
             <p class="text-sm font-medium mb-1">异步加载</p>
+            <p class="text-sm text-muted-foreground mb-3">&lt;AppDialog :confirm-loading="loadingStates.dialog1"&gt;</p>
             <AppDialog 
               title="异步操作" 
               description="点击确认后模拟3秒异步操作"
@@ -272,32 +259,9 @@
         </div>
       </section>
 
-      <!-- 6. 自定义底部 -->
+      <!-- 6. 复杂内容 -->
       <section class="mb-10">
-        <p class="text-lg font-semibold mb-2">6. 自定义底部</p>
-        <p class="text-sm text-muted-foreground mb-3">使用 footer 插槽自定义按钮区域</p>
-        <div>
-          <AppDialog title="自定义底部按钮">
-            <template #trigger>
-              <AppButton variant="outline" size="sm">自定义底部</AppButton>
-            </template>
-            <template #footer>
-              <div class="flex justify-between w-full">
-                <AppButton variant="ghost" size="sm">帮助</AppButton>
-                <div class="flex gap-2">
-                  <AppButton variant="outline" size="sm">取消</AppButton>
-                  <AppButton variant="default" size="sm">确认</AppButton>
-                </div>
-              </div>
-            </template>
-            <p class="text-sm">完全自定义底部按钮区域的对话框。</p>
-          </AppDialog>
-        </div>
-      </section>
-
-      <!-- 7. 复杂内容 -->
-      <section class="mb-10">
-        <p class="text-lg font-semibold mb-2">7. 复杂内容示例</p>
+        <p class="text-lg font-semibold mb-2">6. 复杂内容示例</p>
         <p class="text-sm text-muted-foreground mb-3">展示统计图表等复杂内容</p>
         <div>
           <AppDialog title="详细统计信息" size="lg">

@@ -136,17 +136,18 @@ const colorBorderStyle = computed(() => {
 // 文字颜色样式（当背景色较深时，自动使用白色文字）
 const textColorStyle = computed(() => {
   if (props.variant !== 'color-bg') return {}
+  if(!props.color) return{}
   
   // 简单的亮度计算，决定文字颜色
   const getBrightness = (color: string) => {
-    let r, g, b
+    let r = 0, g = 0, b = 0
     
     if (color.startsWith('rgb')) {
       const matches = color.match(/\d+/g)
-      if (matches) {
-        r = parseInt(matches[0])
-        g = parseInt(matches[1])
-        b = parseInt(matches[2])
+      if (matches && matches.length >= 3) {
+        r = parseInt(matches[0] ?? '0')
+        g = parseInt(matches[1] ?? '0')
+        b = parseInt(matches[2] ?? '0')
       }
     } else if (color.startsWith('#')) {
       const hex = color.slice(1)

@@ -11,8 +11,10 @@
   <div>
     <router-link to="/Components/AppButtonDisplay"><AppButton>AppButton</AppButton></router-link>
     <router-link to="/Components/AppCardDisplay"><AppButton>AppCard</AppButton></router-link>
-    <router-link to="/Components/AppDialogDisplay"><AppButton>AppDialog</AppButton></router-link>
     <router-link to="/Components/AppPageContainerDisplay"><AppButton>AppPageContainer</AppButton></router-link>
+    <router-link to="/Components/AppDialogDisplay"><AppButton>AppDialog</AppButton></router-link>
+    <router-link to="/Components/AppInputDisplay"><AppButton>AppInput</AppButton></router-link>
+    <router-link to="/Components/AppFormDisplay"><AppButton>AppForm</AppButton></router-link>
   </div>
   <AppCard variant="color-bg" color="rgb(250,250,250)">
     <div style="min-width: 1000px; width: 100%;">

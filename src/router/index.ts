@@ -5,6 +5,8 @@ import AppButtonDisplay from '@/views/AppButtonDisplayPage.vue'
 import AppCardDisplay from '@/views/AppCardDisplayPage.vue'
 import AppPageContainerDisplay from '@/views/AppPageContainerDisplayPage.vue'
 import AppDialogDisplay from '@/views/AppDialogDisplayPage.vue'
+import AppInputDisplay from '@/views/AppInputDisplayPage.vue'
+import AppFormDisplay from '@/views/AppFormDisplayPage.vue'
 import Components from '@/views/Components.vue'
 
 const routes = [
@@ -37,6 +39,16 @@ const routes = [
         path: 'AppDialogDisplay',
         name: 'AppDialogDisplay',
         component: AppDialogDisplay
+      },
+      {
+        path: 'AppInputDisplay',
+        name: 'AppInputDisplay',
+        component: AppInputDisplay
+      },
+      {
+        path: 'AppFormDisplay',
+        name: 'AppFormDisplay',
+        component: AppFormDisplay
       }
     ]
   }

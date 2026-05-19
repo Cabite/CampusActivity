@@ -1,6 +1,6 @@
 <!-- AppCardDisplayPage.vue - 完整展示页面 -->
 <template>
-  <div class="min-h-screen bg-gradient-to-br p-8">
+  <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950 p-8">
     <div class="mx-auto max-w-7xl">
       <!-- 页面标题 -->
       <div class="mb-8 text-center">
