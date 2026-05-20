@@ -115,7 +115,7 @@ const handleLogout = () => {
         <div class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/5 mb-3">
           <div class="relative">
             <img 
-              src="/src/assets/default-avatar.png" 
+              src="@/assets/logo.png" 
               alt="Avatar"
               class="h-10 w-10 rounded-full object-cover border-2 border-primary"
             />

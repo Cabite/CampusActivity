@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { AppButton, AppCard, AppPageContainer, AppForm } from '@/components'
 import Topbar from '@/layouts/Topbar.vue'
 import Sidebar from '@/layouts/Sidebar.vue'
 import { ref } from 'vue'
@@ -28,7 +29,7 @@ const toggleSidebar = () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-background">
+  <AppPageContainer>
     <!-- 顶部导航栏 -->
     <Topbar />
     
@@ -56,5 +57,5 @@ const toggleSidebar = () => {
         </template>
       </Sidebar>
     </div>
-  </div>
+  </AppPageContainer>
 </template>
