@@ -44,7 +44,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Loader2 } from '@lucide/vue'
+import { Loader2 } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import type { ButtonVariants } from '@/components/ui/button'

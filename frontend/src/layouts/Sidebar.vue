@@ -1,217 +1,143 @@
 <script setup lang="ts">
-import { 
-  User, 
-  Home, 
-  Trophy, 
+import { ref, computed, onMounted } from 'vue'
+import { useRoute, useRouter, RouterLink } from 'vue-router'
+import {
+  User,
+  Home,
+  Trophy,
   CalendarCheck,
-  Award,
-  Clock,
-  Settings,
+  Bell,
+  Search,
   LogOut,
-  Bell
-} from '@lucide/vue'
-import { AppSidebar } from '@/components/layout'
+  ChevronDown,
+} from 'lucide-vue-next'
+import { cn } from '@/lib/utils'
+import { useAuthStore } from '@/stores/auth'
+import { useUserStore } from '@/stores/user'
+import { logout } from '@/api/auth'
 
-// 定义事件
-const emit = defineEmits<{
-  'nav-click': [item: any]
-  'logo-click': []
-}>()
+const router = useRouter()
+const route = useRoute()
+const auth = useAuthStore()
+const userStore = useUserStore()
 
-// 侧边栏导航项配置
-const sidebarNavItems = [
+const personalOpen = ref(true)
+
+const navItems = [
   {
     label: '个人中心',
     icon: User,
-    open: true, // 默认展开
     children: [
-      {
-        label: '个人主页',
-        icon: Home,
-        href: '/profile',
-        description: '查看和编辑个人资料'
-      },
-      {
-        label: '成就与统计',
-        icon: Trophy,
-        href: '/profile/achievements',
-        description: '查看获得的成就和活动统计',
-        badge: '3',
-        badgeVariant: 'primary'
-      },
-      {
-        label: '我的活动历史',
-        icon: CalendarCheck,
-        href: '/profile/activities',
-        description: '查看参与过的活动记录',
-        badge: '12',
-        badgeVariant: 'success'
-      }
-    ]
+      { label: '个人主页', icon: Home, to: '/profile' },
+      { label: '统计排行', icon: Trophy, to: '/achievement' },
+      { label: '我的活动历史', icon: CalendarCheck, to: '/my/history' },
+    ],
   },
-  {
-    label: '消息通知',
-    icon: Bell,
-    href: '/notifications',
-    badge: '5',
-    badgeVariant: 'danger'
-  },
-  {
-    label: '系统设置',
-    icon: Settings,
-    href: '/settings'
-  }
+  { label: '活动查询', icon: Search, to: '/activities' },
+  { label: '通知与公告', icon: Bell, to: '/notifications' },
 ]
 
-// 处理导航点击
-const handleNavClick = (item: any) => {
-  console.log('Sidebar 导航点击:', item)
-  emit('nav-click', item)
-  
-  // 如果有 href，可以进行路由跳转
-  if (item.href) {
-    // 如果你使用 Vue Router，可以这样：
-    // router.push(item.href)
-    
-    // 或者使用原生导航
-    // window.location.href = item.href
+const displayName = computed(() => userStore.profile?.username || '学生用户')
+
+function isActive(path: string) {
+  if (path === '/activities') {
+    return route.path === '/activities' || route.path.startsWith('/activities/')
   }
+  return route.path.startsWith(path)
 }
 
-// 处理 Logo 点击
-const handleLogoClick = () => {
-  console.log('Sidebar Logo 点击')
-  emit('logo-click')
+async function handleLogout() {
+  try {
+    await logout()
+  } catch {
+    /* ignore */
+  }
+  auth.clearAuth()
+  userStore.clearProfile()
+  router.push('/login')
 }
 
-// 退出登录
-const handleLogout = () => {
-  console.log('退出登录')
-  // 处理退出登录逻辑
-}
+onMounted(() => {
+  if (auth.isLoggedIn && !userStore.profile) {
+    userStore.fetchProfile().catch(() => {})
+  }
+})
 </script>
 
 <template>
-  <AppSidebar
-    brand-name="CampusActivity"
-    :nav-items="sidebarNavItems"
-    position="left"
-    variant="default"
-    :collapsible="true"
-    :default-collapsed="false"
-    :hover-expand="true"
-    :mobile-auto-collapse="true"
-    :shadow="true"
-    :border="true"
-    :fixed="true"
-    @nav-click="handleNavClick"
-    @logo-click="handleLogoClick"
-    @collapse-change="(collapsed) => console.log('侧边栏状态:', collapsed)"
-  >
-    <!-- 底部用户信息插槽 -->
-    <template #footer="{ collapsed }">
-      <div class="space-y-2">
-        <!-- 用户信息区域 -->
-        <div class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/5 mb-3">
-          <div class="relative">
-            <img 
-              src="@/assets/logo.png" 
-              alt="Avatar"
-              class="h-10 w-10 rounded-full object-cover border-2 border-primary"
-            />
-            <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-background"></div>
-          </div>
-          
-          <div v-if="!collapsed" class="flex-1 min-w-0">
-            <p class="text-sm font-semibold truncate">张三</p>
-            <p class="text-xs text-muted-foreground truncate">zhangsan@example.com</p>
-          </div>
-        </div>
-        
-        <!-- 退出登录按钮 -->
-        <button
-          class="w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 hover:bg-red-500/10 hover:text-red-500 group"
-          :class="{ 'justify-center': collapsed }"
-          @click="handleLogout"
+  <aside class="flex w-56 shrink-0 flex-col border-r bg-white">
+    <div class="border-b px-4 py-4">
+      <p class="text-sm font-bold text-[var(--proto-blue)]">BIT 校园活动</p>
+    </div>
+
+    <nav class="flex-1 overflow-y-auto py-3">
+      <ul class="space-y-0.5 px-2">
+        <li v-for="item in navItems" :key="item.label">
+          <template v-if="item.children">
+            <button
+              type="button"
+              class="flex w-full items-center gap-2 rounded-md px-3 py-2.5 text-sm text-foreground hover:bg-blue-50"
+              @click="personalOpen = !personalOpen"
+            >
+              <component :is="item.icon" class="h-4 w-4 shrink-0 text-gray-500" />
+              <span class="flex-1 text-left">{{ item.label }}</span>
+              <ChevronDown
+                class="h-4 w-4 text-gray-400 transition-transform"
+                :class="{ 'rotate-180': personalOpen }"
+              />
+            </button>
+            <ul v-show="personalOpen" class="ml-2 mt-0.5 space-y-0.5 border-l border-gray-100 pl-2">
+              <li v-for="child in item.children" :key="child.to">
+                <RouterLink
+                  :to="child.to"
+                  :class="
+                    cn(
+                      'flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors',
+                      isActive(child.to) ? 'sidebar-active font-medium' : 'text-gray-600 hover:bg-blue-50',
+                    )
+                  "
+                >
+                  <component :is="child.icon" class="h-4 w-4 shrink-0" />
+                  {{ child.label }}
+                </RouterLink>
+              </li>
+            </ul>
+          </template>
+
+          <RouterLink
+            v-else
+            :to="item.to!"
+            :class="
+              cn(
+                'flex items-center gap-2 rounded-md px-3 py-2.5 text-sm transition-colors',
+                isActive(item.to!) ? 'sidebar-active font-medium' : 'text-gray-600 hover:bg-blue-50',
+              )
+            "
+          >
+            <component :is="item.icon" class="h-4 w-4 shrink-0" />
+            {{ item.label }}
+          </RouterLink>
+        </li>
+      </ul>
+    </nav>
+
+    <div class="border-t p-3">
+      <div class="mb-2 flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-2">
+        <div
+          class="flex h-9 w-9 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-600"
         >
-          <LogOut class="h-5 w-5" />
-          <span v-if="!collapsed" class="text-sm">退出登录</span>
-        </button>
-      </div>
-    </template>
-
-    <!-- 主内容插槽 -->
-    <template #content>
-      <slot name="content">
-        <!-- 默认内容 -->
-        <div class="p-6">
-          <div class="bg-card rounded-lg shadow-sm p-6 mb-6">
-            <h1 class="text-2xl font-bold mb-2">欢迎回来，张三！</h1>
-            <p class="text-muted-foreground">
-              这是 CampusActivity 平台，在这里你可以参与各种校园活动，记录你的精彩瞬间。
-            </p>
-          </div>
-
-          <!-- 快捷统计卡片 -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-lg p-6 text-white">
-              <div class="flex items-center justify-between">
-                <div>
-                  <p class="text-blue-100 text-sm">参与活动</p>
-                  <p class="text-3xl font-bold mt-2">24</p>
-                  <p class="text-blue-100 text-xs mt-1">较上月 +8</p>
-                </div>
-                <CalendarCheck class="h-12 w-12 text-blue-200" />
-              </div>
-            </div>
-            
-            <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow-lg p-6 text-white">
-              <div class="flex items-center justify-between">
-                <div>
-                  <p class="text-purple-100 text-sm">获得成就</p>
-                  <p class="text-3xl font-bold mt-2">15</p>
-                  <p class="text-purple-100 text-xs mt-1">已解锁 15/30</p>
-                </div>
-                <Award class="h-12 w-12 text-purple-200" />
-              </div>
-            </div>
-            
-            <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-lg p-6 text-white">
-              <div class="flex items-center justify-between">
-                <div>
-                  <p class="text-green-100 text-sm">活动时长</p>
-                  <p class="text-3xl font-bold mt-2">128</p>
-                  <p class="text-green-100 text-xs mt-1">累计小时数</p>
-                </div>
-                <Clock class="h-12 w-12 text-green-200" />
-              </div>
-            </div>
-          </div>
-
-          <!-- 最近活动 -->
-          <div class="bg-card rounded-lg shadow-sm p-6">
-            <h2 class="text-xl font-semibold mb-4">最近活动</h2>
-            <div class="space-y-3">
-              <div v-for="i in 3" :key="i" class="flex items-center gap-4 p-3 rounded-lg hover:bg-muted transition-colors">
-                <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                  <CalendarCheck class="h-6 w-6 text-primary" />
-                </div>
-                <div class="flex-1">
-                  <p class="font-medium">校园马拉松活动 {{ i }}</p>
-                  <p class="text-sm text-muted-foreground">2024年{{ 10 + i }}月{{ 15 + i }}日</p>
-                </div>
-                <div class="text-right">
-                  <p class="text-sm font-medium text-green-600">已完成</p>
-                </div>
-              </div>
-            </div>
-          </div>
+          {{ displayName.charAt(0) }}
         </div>
-      </slot>
-    </template>
-  </AppSidebar>
+        <p class="truncate text-sm font-medium">{{ displayName }}</p>
+      </div>
+      <button
+        type="button"
+        class="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-gray-600 hover:bg-red-50 hover:text-red-600"
+        @click="handleLogout"
+      >
+        <LogOut class="h-4 w-4" />
+        退出登录
+      </button>
+    </div>
+  </aside>
 </template>
-
-<style scoped>
-/* 你可以添加自定义样式 */
-</style>

@@ -1,0 +1,115 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --primary: 221 83% 53%;
+    --primary-foreground: 210 40% 98%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 214 100% 97%;
+    --accent-foreground: 214 100% 40%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 214 100% 50%;
+    --radius: 0.5rem;
+    --proto-blue: #1890ff;
+    --proto-blue-dark: #096dd9;
+    --proto-blue-bg: #1890ff;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+  }
+}
+
+@layer components {
+  .proto-grid-bg {
+    background-color: var(--proto-blue-bg);
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.12) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.12) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  .proto-auth-bg {
+    @apply proto-grid-bg min-h-screen;
+  }
+
+  .proto-card {
+    @apply rounded-lg bg-white shadow-lg;
+  }
+
+  .proto-segment {
+    @apply inline-flex overflow-hidden rounded-md border border-[var(--proto-blue)] text-sm;
+  }
+
+  .proto-segment-item {
+    @apply cursor-pointer px-5 py-2 transition-colors;
+  }
+
+  .proto-segment-item.active {
+    @apply bg-[var(--proto-blue)] text-white;
+  }
+
+  .proto-segment-item:not(.active) {
+    @apply bg-white text-[var(--proto-blue)];
+  }
+
+  .material-input {
+    @apply w-full border-0 border-b border-gray-300 bg-transparent px-0 py-2 text-sm outline-none focus:border-[var(--proto-blue)] focus:ring-0;
+  }
+
+  .proto-table {
+    @apply w-full border-collapse text-sm;
+  }
+
+  .proto-table th {
+    @apply bg-gray-100 px-4 py-3 text-left font-medium text-gray-700;
+  }
+
+  .proto-table td {
+    @apply border-b border-gray-100 px-4 py-3;
+  }
+
+  .proto-table tbody tr:nth-child(even) {
+    @apply bg-gray-50/80;
+  }
+
+  .proto-table tbody tr:hover {
+    @apply bg-blue-50/50 cursor-pointer;
+  }
+
+  .proto-btn-primary {
+    @apply rounded-md bg-[var(--proto-blue)] px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-[var(--proto-blue-dark)] disabled:opacity-50;
+  }
+
+  .proto-btn-outline {
+    @apply rounded-md border border-[var(--proto-blue)] bg-white px-6 py-2 text-sm font-medium text-[var(--proto-blue)] transition-colors hover:bg-blue-50;
+  }
+
+  .sidebar-active {
+    @apply relative bg-blue-50 text-[var(--proto-blue)];
+  }
+
+  .sidebar-active::after {
+    content: '';
+    @apply absolute right-0 top-1 bottom-1 w-1 rounded-l bg-[var(--proto-blue)];
+  }
+}

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, useAttrs } from 'vue'
 import { cn } from '@/lib/utils'
-import { Eye, EyeOff, AlertCircle, CheckCircle, X, ChevronDown, Check } from '@lucide/vue'
+import { Eye, EyeOff, AlertCircle, CheckCircle, X, ChevronDown, Check } from 'lucide-vue-next'
 
 interface Props {
   // 基础属性 - modelValue 支持 boolean

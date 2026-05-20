@@ -1,68 +1,78 @@
 import { createRouter, createWebHistory } from 'vue-router'
-
-import Login from '@/views/Login.vue'
-import AppButtonDisplay from '@/views/AppButtonDisplayPage.vue'
-import AppCardDisplay from '@/views/AppCardDisplayPage.vue'
-import AppPageContainerDisplay from '@/views/AppPageContainerDisplayPage.vue'
-import AppDialogDisplay from '@/views/AppDialogDisplayPage.vue'
-import AppInputDisplay from '@/views/AppInputDisplayPage.vue'
-import AppFormDisplay from '@/views/AppFormDisplayPage.vue'
-import Components from '@/views/Components.vue'
-import Dashboard from '@/views/Dashboard.vue'
-
-const routes = [
-  {
-    path: '/',
-    name: 'Login',
-    component: Login
-  },
-  {
-    path: '/Components',
-    name: 'Components',
-    component: Components,
-    children: [
-      {
-        path: 'AppButtonDisplay',
-        name: 'AppButtonDisplay',
-        component: AppButtonDisplay
-      },
-      {
-        path: 'AppCardDisplay',
-        name: 'AppCardDisplay',
-        component: AppCardDisplay
-      },
-      {
-        path: 'AppPageContainerDisplay',
-        name: 'AppPageContainerDisplay',
-        component: AppPageContainerDisplay
-      },
-      {
-        path: 'AppDialogDisplay',
-        name: 'AppDialogDisplay',
-        component: AppDialogDisplay
-      },
-      {
-        path: 'AppInputDisplay',
-        name: 'AppInputDisplay',
-        component: AppInputDisplay
-      },
-      {
-        path: 'AppFormDisplay',
-        name: 'AppFormDisplay',
-        component: AppFormDisplay
-      }
-    ]
-  },
-  {
-    path: '/Dashboard',
-    name: 'Dashboard',
-    component: Dashboard
-  },
-]
+import { useAuthStore } from '@/stores/auth'
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
-  routes: routes,
+  history: createWebHistory(),
+  routes: [
+    {
+      path: '/login',
+      name: 'login',
+      component: () => import('@/views/LoginView.vue'),
+      meta: { guest: true },
+    },
+    {
+      path: '/register',
+      name: 'register',
+      component: () => import('@/views/RegisterView.vue'),
+      meta: { guest: true },
+    },
+    {
+      path: '/',
+      component: () => import('@/layouts/AppLayout.vue'),
+      meta: { requiresAuth: true },
+      children: [
+        { path: '', redirect: '/activities' },
+        {
+          path: 'activities',
+          name: 'activities',
+          meta: { title: '活动查询' },
+          component: () => import('@/views/ActivitiesView.vue'),
+        },
+        {
+          path: 'activities/:id',
+          name: 'activity-detail',
+          meta: { title: '活动详情' },
+          component: () => import('@/views/ActivityDetailView.vue'),
+        },
+        {
+          path: 'profile',
+          name: 'profile',
+          meta: { title: '个人主页' },
+          component: () => import('@/views/ProfileView.vue'),
+        },
+        {
+          path: 'my/history',
+          name: 'my-history',
+          meta: { title: '活动历史' },
+          component: () => import('@/views/MyHistoryView.vue'),
+        },
+        {
+          path: 'notifications',
+          name: 'notifications',
+          meta: { title: '通知与公告' },
+          component: () => import('@/views/NotificationsView.vue'),
+        },
+        {
+          path: 'achievement',
+          name: 'achievement',
+          meta: { title: '统计排行' },
+          component: () => import('@/views/AchievementView.vue'),
+        },
+      ],
+    },
+    { path: '/:pathMatch(.*)*', redirect: '/activities' },
+  ],
+})
+
+router.beforeEach((to) => {
+  const auth = useAuthStore()
+  if (to.meta.requiresAuth && !auth.isLoggedIn) {
+    return { name: 'login', query: { redirect: to.fullPath } }
+  }
+  if (to.meta.guest && auth.isLoggedIn) {
+    return { name: 'activities' }
+  }
+  return true
 })
 
 export default router

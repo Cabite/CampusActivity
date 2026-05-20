@@ -1,19 +1,39 @@
-import axios from 'axios'
+import { apiPost } from './request'
+import type { LoginData, RegisterData } from '@/types/api'
 
-import type { LoginRequest, LoginResponse, RegisterRequest, RegisterResponse } from '@/types/auth'
-
-export function login(data: LoginRequest) {
-    return axios.post<{
-        code: number
-        message: string
-        data: LoginResponse
-    }>('/api/auth/login', data)
+export interface RegisterPayload {
+  student_id: string
+  email: string
+  username: string
+  password: string
+  confirm_password: string
+  gender: string
+  college: string
+  major: string
+  grade: string
+  phone?: string
 }
 
-export function register(data: RegisterRequest) {
-    return axios.post<{
-        code: number
-        message: string
-        data: RegisterResponse
-    }>('/api/auth/register', data)
+export function login(account: string, password: string) {
+  return apiPost<LoginData>('/auth/login', {
+    role: 'user',
+    account,
+    password,
+  })
+}
+
+export function register(payload: RegisterPayload) {
+  return apiPost<RegisterData>('/auth/register/user', payload)
+}
+
+export function logout() {
+  return apiPost<null>('/auth/logout')
+}
+
+export function changePassword(old_password: string, new_password: string, confirm_password: string) {
+  return apiPost<null>('/user/change-password', {
+    old_password,
+    new_password,
+    confirm_password,
+  })
 }
