@@ -1,8 +1,8 @@
 <!-- AppNavbar.vue -->
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { Menu, X } from '@lucide/vue'
-import { cn } from '@/lib/utils'
+import { Menu, X } from 'lucide-vue-next'
+import { cn } from '@/utils'
 
 interface NavItem {
   label: string

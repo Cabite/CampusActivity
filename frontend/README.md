@@ -1,42 +1,38 @@
-# vue-components
+# 校园活动管理平台 - 学生端前端
 
-This template should help get you started developing with Vue 3 in Vite.
+## 技术栈
 
-## Recommended IDE Setup
+Vue 3 · Vite · TypeScript · TailwindCSS · Pinia · Axios · reka-ui（shadcn 风格）· vite-plugin-mock
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+## 快速开始
 
-## Recommended Browser Setup
-
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
-
-## Type Support for `.vue` Imports in TS
-
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
-
-```sh
-npm install
+```bash
+pnpm install
+pnpm dev
 ```
 
-### Compile and Hot-Reload for Development
+访问 http://localhost:5173/
 
-```sh
-npm run dev
+### Mock 登录（无后端时）
+
+- 学号：`2024000001`
+- 密码：`password123`
+
+## 目录结构
+
 ```
-
-### Type-Check, Compile and Minify for Production
-
-```sh
-npm run build
+src/
+  api/              # 前后端接口
+  assets/           # 静态资源（logo.png、main.css）
+  components/
+    common/         # 通用业务组件
+    layout/         # 布局类组件（AppForm、AppPageContainer 等）
+    ui/             # UI 组件库
+  composables/      # 组合式函数
+  layouts/          # 导航栏与页面框架（Sidebar、AppLayout）
+  router/           # 路由
+  stores/           # 数据存储（Pinia）
+  utils/            # 工具函数、校验、常量
+  views/            # 页面
+  types/            # 类型定义
 ```

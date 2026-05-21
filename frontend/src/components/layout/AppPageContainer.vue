@@ -1,7 +1,7 @@
 <!-- AppPageContainer.vue -->
 <script setup lang="ts">
 import { computed } from 'vue'
-import { cn } from '@/lib/utils'
+import { cn } from '@/utils'
 
 interface Props {
   // 背景变体

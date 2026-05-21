@@ -5,7 +5,7 @@ import AppInput from '../common/AppInput.vue'
 import AppCard from '../common/AppCard.vue'
 import AppButton from '../common/AppButton.vue'
 import AppDialog from './AppDialog.vue'
-import { cn } from '@/lib/utils'
+import { cn } from '@/utils'
 
 // 表单项类型
 export interface FormField {
@@ -57,6 +57,7 @@ interface Props {
   gap?: 'sm' | 'md' | 'lg'
   loading?: boolean
   disabled?: boolean
+  submitFullWidth?: boolean
   labelClass?: string
   class?: string
 }
@@ -85,6 +86,7 @@ const props = withDefaults(defineProps<Props>(), {
   gap: 'md',
   loading: false,
   disabled: false,
+  submitFullWidth: false,
   labelClass: '',
   class: ''
 })
@@ -488,9 +490,10 @@ const isTextareaField = (field: FormField) => field.type === 'textarea'
 
         <div
           v-if="props.mode !== 'view' && (props.showSubmit || props.showCancel)"
-          class="flex gap-3 mt-4"
+          class="mt-4 flex gap-3"
           :class="{
-            'col-span-full': layout === 'grid'
+            'col-span-full': layout === 'grid',
+            'justify-center': props.submitFullWidth,
           }"
         >
           <AppButton
@@ -499,6 +502,9 @@ const isTextareaField = (field: FormField) => field.type === 'textarea'
             :variant="props.submitVariant"
             :loading="props.loading || isSubmitting"
             :disabled="props.disabled"
+            :full-width="props.submitFullWidth"
+            size="lg"
+            :class="props.submitFullWidth ? 'h-11 text-base' : ''"
           >
             {{ props.submitText }}
           </AppButton>
@@ -638,9 +644,10 @@ const isTextareaField = (field: FormField) => field.type === 'textarea'
 
       <div
         v-if="props.mode !== 'view' && (props.showSubmit || props.showCancel)"
-        class="flex gap-3 mt-4"
+        class="mt-4 flex gap-3"
         :class="{
-          'col-span-full': layout === 'grid'
+          'col-span-full': layout === 'grid',
+          'justify-center': props.submitFullWidth,
         }"
       >
         <AppButton
@@ -649,6 +656,9 @@ const isTextareaField = (field: FormField) => field.type === 'textarea'
           :variant="props.submitVariant"
           :loading="props.loading || isSubmitting"
           :disabled="props.disabled"
+          :full-width="props.submitFullWidth"
+          size="lg"
+          :class="props.submitFullWidth ? 'h-11 text-base' : ''"
         >
           {{ props.submitText }}
         </AppButton>

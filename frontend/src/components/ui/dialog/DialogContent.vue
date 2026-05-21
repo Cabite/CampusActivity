@@ -2,14 +2,14 @@
 import type { DialogContentEmits, DialogContentProps } from "reka-ui"
 import type { HTMLAttributes } from "vue"
 import { reactiveOmit } from "@vueuse/core"
-import { X } from "@lucide/vue"
+import { X } from "lucide-vue-next"
 import {
   DialogClose,
   DialogContent,
   DialogPortal,
   useForwardPropsEmits,
 } from "reka-ui"
-import { cn } from "@/lib/utils"
+import { cn } from "@/utils"
 import DialogOverlay from "./DialogOverlay.vue"
 
 defineOptions({
