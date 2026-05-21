@@ -2,7 +2,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { ChevronLeft, ChevronRight, Menu } from 'lucide-vue-next'
-import { cn } from '@/lib/utils'
+import { cn } from '@/utils'
 
 interface NavItem {
   label: string

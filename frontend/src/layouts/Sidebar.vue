@@ -11,7 +11,7 @@ import {
   LogOut,
   ChevronDown,
 } from 'lucide-vue-next'
-import { cn } from '@/lib/utils'
+import { cn } from '@/utils'
 import { useAuthStore } from '@/stores/auth'
 import { useUserStore } from '@/stores/user'
 import { logout } from '@/api/auth'

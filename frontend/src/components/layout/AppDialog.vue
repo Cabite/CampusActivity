@@ -10,7 +10,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { cn } from '@/lib/utils'
+import { cn } from '@/utils'
 import AppButton from '../common/AppButton.vue'
 
 interface Props {

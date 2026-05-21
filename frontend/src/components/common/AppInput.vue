@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, useAttrs } from 'vue'
-import { cn } from '@/lib/utils'
+import { cn } from '@/utils'
 import { Eye, EyeOff, AlertCircle, CheckCircle, X, ChevronDown, Check } from 'lucide-vue-next'
 
 interface Props {

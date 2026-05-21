@@ -5,7 +5,7 @@ import AppInput from '../common/AppInput.vue'
 import AppCard from '../common/AppCard.vue'
 import AppButton from '../common/AppButton.vue'
 import AppDialog from './AppDialog.vue'
-import { cn } from '@/lib/utils'
+import { cn } from '@/utils'
 
 // 表单项类型
 export interface FormField {

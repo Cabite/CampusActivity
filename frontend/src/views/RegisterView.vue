@@ -9,8 +9,8 @@ import { showApiError } from '@/api/request'
 import { useAuthStore } from '@/stores/auth'
 import { useUserStore } from '@/stores/user'
 import { toast } from '@/composables/useToast'
-import { COLLEGES, GRADES } from '@/constants'
-import { isStudentId, isEmail, isUsername, isPassword, isPhone } from '@/lib/validators'
+import { COLLEGES, GRADES } from '@/utils/constants'
+import { isStudentId, isEmail, isUsername, isPassword, isPhone } from '@/utils/validators'
 
 const router = useRouter()
 const auth = useAuthStore()
