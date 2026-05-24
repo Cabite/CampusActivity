@@ -1,15 +1,11 @@
 <template>
   <div class="flex h-screen">
-    <!-- 侧边栏（同上） -->
     <aside class="w-64 bg-white shadow-md flex flex-col z-10">
       <div class="p-4 border-b">
         <h1 class="text-xl font-bold text-blue-600">CampusActivity</h1>
         <p class="text-xs text-gray-500">组织者面板</p>
       </div>
       <nav class="flex-1 p-2 space-y-1">
-        <router-link to="/organizer/dashboard" class="flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition-colors" active-class="bg-blue-50 text-blue-600">
-          <iconify-icon icon="ph:gauge" class="mr-2 w-5 h-5"></iconify-icon> 工作台
-        </router-link>
         <router-link to="/organizer/activities" class="flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition-colors" active-class="bg-blue-50 text-blue-600">
           <iconify-icon icon="ph:calendar-check" class="mr-2 w-5 h-5"></iconify-icon> 活动管理
         </router-link>
@@ -87,20 +83,27 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import AppPageContainer from '@/components/layout/AppPageContainer.vue'
 import AppCard from '@/components/common/AppCard.vue'
+import { getAnnouncements, getNotifications, markNotificationRead } from '@/api/organizer'
 
 const router = useRouter()
 const activeTab = ref<'announcement' | 'message'>('announcement')
 const loadingAnnouncement = ref(false)
 const loadingMessage = ref(false)
 
+// 系统公告
 const announcements = ref<any[]>([])
 const announcementPage = ref(1)
 const announcementTotalPages = ref(1)
+const announcementPageSize = 10
+
+// 我的消息
 const messages = ref<any[]>([])
 const unreadCount = ref(0)
 const messagePage = ref(1)
 const messageTotalPages = ref(1)
+const messagePageSize = 10
 
+// 模拟数据
 const mockAnnouncements = [
   { id: 1, title: '系统将于本周末进行数据库迁移维护', content: '为了提供更稳定的服务，我们将于周六凌晨2:00至6:00进行停机维护...', created_at: '2026-05-14 09:00' },
   { id: 2, title: '关于加强校园大型集会安全审核的通知', content: '根据最新安全要求，参与人数超过500人的活动需提交详细的安全预案...', created_at: '2026-05-10 14:30' }
@@ -113,28 +116,53 @@ const mockMessages = [
 
 const fetchAnnouncements = async () => {
   loadingAnnouncement.value = true
-  setTimeout(() => {
+  try {
+    const res = await getAnnouncements()
+    if (res.code === 200 && res.data) {
+      announcements.value = res.data
+      announcementTotalPages.value = Math.ceil(announcements.value.length / announcementPageSize)
+    } else throw new Error()
+  } catch {
     announcements.value = mockAnnouncements
     announcementTotalPages.value = 1
+  } finally {
     loadingAnnouncement.value = false
-  }, 100)
+  }
 }
 const fetchMessages = async () => {
   loadingMessage.value = true
-  setTimeout(() => {
+  try {
+    const res = await getNotifications({ page: messagePage.value, page_size: messagePageSize })
+    if (res.code === 200) {
+      messages.value = res.data.list || []
+      unreadCount.value = res.data.unread_count || 0
+      messageTotalPages.value = Math.ceil((res.data.total || 0) / messagePageSize)
+    } else throw new Error()
+  } catch {
     messages.value = mockMessages
     unreadCount.value = mockMessages.filter(m => !m.is_read).length
     messageTotalPages.value = 1
+  } finally {
     loadingMessage.value = false
-  }, 100)
-}
-const markAsRead = (id: number) => {
-  const idx = messages.value.findIndex(m => m.id === id)
-  if (idx !== -1 && !messages.value[idx].is_read) {
-    messages.value[idx].is_read = true
-    unreadCount.value = messages.value.filter(m => !m.is_read).length
   }
-  alert('已标记为已读')
+}
+const markAsRead = async (id: number) => {
+  try {
+    await markNotificationRead(id)
+    const idx = messages.value.findIndex(m => m.id === id)
+    if (idx !== -1 && !messages.value[idx].is_read) {
+      messages.value[idx].is_read = true
+      unreadCount.value = messages.value.filter(m => !m.is_read).length
+    }
+    alert('已标记为已读')
+  } catch {
+    alert('操作失败（模拟）')
+    const idx = messages.value.findIndex(m => m.id === id)
+    if (idx !== -1 && !messages.value[idx].is_read) {
+      messages.value[idx].is_read = true
+      unreadCount.value = messages.value.filter(m => !m.is_read).length
+    }
+  }
 }
 const markAllAsRead = () => {
   messages.value.forEach(m => m.is_read = true)

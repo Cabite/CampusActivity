@@ -1,15 +1,11 @@
 <template>
   <div class="flex h-screen">
-    <!-- 侧边栏（同上） -->
     <aside class="w-64 bg-white shadow-md flex flex-col z-10">
       <div class="p-4 border-b">
         <h1 class="text-xl font-bold text-blue-600">CampusActivity</h1>
         <p class="text-xs text-gray-500">组织者面板</p>
       </div>
       <nav class="flex-1 p-2 space-y-1">
-        <router-link to="/organizer/dashboard" class="flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition-colors" active-class="bg-blue-50 text-blue-600">
-          <iconify-icon icon="ph:gauge" class="mr-2 w-5 h-5"></iconify-icon> 工作台
-        </router-link>
         <router-link to="/organizer/activities" class="flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition-colors" active-class="bg-blue-50 text-blue-600">
           <iconify-icon icon="ph:calendar-check" class="mr-2 w-5 h-5"></iconify-icon> 活动管理
         </router-link>
@@ -94,6 +90,7 @@ import { useRouter, useRoute } from 'vue-router'
 import AppPageContainer from '@/components/layout/AppPageContainer.vue'
 import AppCard from '@/components/common/AppCard.vue'
 import AppButton from '@/components/common/AppButton.vue'
+import { getRegistrationStats } from '@/api/organizer'
 
 const router = useRouter()
 const route = useRoute()
@@ -105,18 +102,43 @@ const stats = reactive({
   totalRegistered: 45,
   checkedInCount: 30,
   checkinRate: 67,
+  byGender: {} as Record<string, number>,
+  byMajor: {} as Record<string, number>,
+  byGrade: {} as Record<string, number>,
+  byCollege: {} as Record<string, number>
+})
+
+// 模拟数据
+const mockStats = {
+  totalRegistered: 45,
+  checkedInCount: 30,
+  checkinRate: 67,
   byGender: { '男': 60, '女': 40 },
   byMajor: { '计算机科学与技术': 40, '软件工程': 30, '信息管理与信息系统': 30 },
   byGrade: { '2024级': 40, '2023级': 40, '2022级': 20 },
   byCollege: { '计算机学院': 40, '软件学院': 30, '信息学院': 20, '经管学院': 10 }
-})
+}
 
 const fetchStats = async () => {
   if (!activityId) return
   loading.value = true
-  setTimeout(() => {
+  try {
+    const res = await getRegistrationStats(activityId)
+    if (res.code === 200) {
+      const d = res.data
+      stats.totalRegistered = d.total_registered
+      stats.checkedInCount = d.total_checked
+      stats.checkinRate = d.total_registered ? Math.round((d.total_checked / d.total_registered) * 100) : 0
+      stats.byGender = d.by_gender || {}
+      stats.byMajor = d.by_major || {}
+      stats.byGrade = d.by_grade || {}
+      stats.byCollege = d.by_college || {}
+    } else throw new Error()
+  } catch {
+    Object.assign(stats, mockStats)
+  } finally {
     loading.value = false
-  }, 100)
+  }
 }
 
 const goBack = () => router.back()

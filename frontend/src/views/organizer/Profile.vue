@@ -1,15 +1,11 @@
 <template>
   <div class="flex h-screen">
-    <!-- 侧边栏（同上） -->
     <aside class="w-64 bg-white shadow-md flex flex-col z-10">
       <div class="p-4 border-b">
         <h1 class="text-xl font-bold text-blue-600">CampusActivity</h1>
         <p class="text-xs text-gray-500">组织者面板</p>
       </div>
       <nav class="flex-1 p-2 space-y-1">
-        <router-link to="/organizer/dashboard" class="flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition-colors" active-class="bg-blue-50 text-blue-600">
-          <iconify-icon icon="ph:gauge" class="mr-2 w-5 h-5"></iconify-icon> 工作台
-        </router-link>
         <router-link to="/organizer/activities" class="flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition-colors" active-class="bg-blue-50 text-blue-600">
           <iconify-icon icon="ph:calendar-check" class="mr-2 w-5 h-5"></iconify-icon> 活动管理
         </router-link>
@@ -87,6 +83,7 @@ import AppPageContainer from '@/components/layout/AppPageContainer.vue'
 import AppCard from '@/components/common/AppCard.vue'
 import AppButton from '@/components/common/AppButton.vue'
 import AppDialog from '@/components/layout/AppDialog.vue'
+import { getUserProfile, updateUserProfile, updateAvatar, resetPassword, deleteAccount, logout } from '@/api/organizer'
 
 const router = useRouter()
 const submitting = ref(false)
@@ -100,6 +97,7 @@ const formData = reactive({
 const profileStatus = ref('approved')
 const avatarUrl = ref('https://modao.cc/agent-py/media/generated_images/2026-05-15/8eb007fda4b34653a3e2673b81eafd5d.jpg')
 
+// 模拟数据
 const mockProfile = {
   org_name: 'XX社团',
   email: 'org@campus.com',
@@ -112,29 +110,52 @@ const mockProfile = {
 const statusText = (status: string) => ({ pending: '审核中', approved: '已认证', rejected: '审核未通过' }[status] || status)
 
 const fetchProfile = async () => {
-  setTimeout(() => {
+  try {
+    const res = await getUserProfile()
+    if (res.code === 200 && res.data) {
+      const data = res.data
+      formData.org_name = data.org_name
+      formData.email = data.email
+      formData.phone = data.phone || ''
+      formData.description = data.description || ''
+      profileStatus.value = data.status
+      avatarUrl.value = data.avatar || avatarUrl.value
+    } else throw new Error()
+  } catch {
+    // 降级模拟数据
     formData.org_name = mockProfile.org_name
     formData.email = mockProfile.email
     formData.phone = mockProfile.phone
     formData.description = mockProfile.description
     profileStatus.value = mockProfile.status as any
     avatarUrl.value = mockProfile.avatar
-  }, 100)
+  }
 }
 
 const handleSubmit = async () => {
   submitting.value = true
-  setTimeout(() => {
-    alert('信息已保存（模拟）')
+  try {
+    await updateUserProfile(formData)
+    alert('信息已保存')
+    await fetchProfile()
+  } catch {
+    alert('保存失败（模拟）')
+  } finally {
     submitting.value = false
-  }, 500)
+  }
 }
 
+// 头像上传
 const avatarModalVisible = ref(false)
 const avatarInput = ref<HTMLInputElement>()
 const avatarPreview = ref('')
 const selectedFile = ref<File | null>(null)
-const openAvatarUpload = () => { avatarModalVisible.value = true; avatarPreview.value = ''; selectedFile.value = null }
+
+const openAvatarUpload = () => {
+  avatarModalVisible.value = true
+  avatarPreview.value = ''
+  selectedFile.value = null
+}
 const triggerFileInput = () => avatarInput.value?.click()
 const onAvatarSelected = (event: Event) => {
   const input = event.target as HTMLInputElement
@@ -144,30 +165,79 @@ const onAvatarSelected = (event: Event) => {
   }
 }
 const uploadAvatar = async () => {
-  if (!selectedFile.value) { alert('请选择图片'); return }
-  alert('头像更新成功（模拟）')
-  avatarModalVisible.value = false
+  if (!selectedFile.value) {
+    alert('请选择图片')
+    return
+  }
+  try {
+    const res = await updateAvatar(selectedFile.value)
+    if (res.code === 200) avatarUrl.value = res.data.avatar_url
+    alert('头像更新成功')
+    avatarModalVisible.value = false
+  } catch {
+    alert('上传失败（模拟）')
+    avatarUrl.value = avatarPreview.value
+    avatarModalVisible.value = false
+  }
 }
 
+// 修改密码
 const pwdModalVisible = ref(false)
 const oldPassword = ref('')
 const newPassword = ref('')
 const confirmPassword = ref('')
+
 const openChangePasswordModal = () => {
-  oldPassword.value = ''; newPassword.value = ''; confirmPassword.value = ''
+  oldPassword.value = ''
+  newPassword.value = ''
+  confirmPassword.value = ''
   pwdModalVisible.value = true
 }
 const changePassword = async () => {
-  if (!oldPassword.value || !newPassword.value || !confirmPassword.value) { alert('请填写完整'); return }
-  if (newPassword.value !== confirmPassword.value) { alert('新密码与确认密码不一致'); return }
-  alert('密码修改成功（模拟）')
-  pwdModalVisible.value = false
+  if (!oldPassword.value || !newPassword.value || !confirmPassword.value) {
+    alert('请填写完整')
+    return
+  }
+  if (newPassword.value !== confirmPassword.value) {
+    alert('新密码与确认密码不一致')
+    return
+  }
+  // 注意：修改密码需要 token，实际应由后端发送重置链接，这里简化
+  try {
+    // 假设已有重置 token，实际流程略复杂，这里仅作模拟
+    alert('密码修改成功（模拟）')
+    pwdModalVisible.value = false
+  } catch {
+    alert('修改失败')
+  }
 }
 
-const handleLogout = () => { if (confirm('确定退出登录吗？')) router.push('/login') }
-const handleDeleteAccount = () => { if (confirm('确定注销？')) router.push('/login') }
+const handleLogout = async () => {
+  if (confirm('确定要退出登录吗？')) {
+    try {
+      await logout()
+      localStorage.removeItem('token')
+      router.push('/login')
+    } catch {
+      router.push('/login')
+    }
+  }
+}
+const handleDeleteAccount = async () => {
+  if (confirm('注销账号后将无法恢复，所有数据将被清除。确定注销吗？')) {
+    try {
+      await deleteAccount(true)
+      localStorage.removeItem('token')
+      router.push('/login')
+    } catch {
+      alert('注销失败（模拟）')
+    }
+  }
+}
 const goBack = () => router.back()
 const logout = () => { if (confirm('确定退出登录吗？')) router.push('/login') }
 
-onMounted(fetchProfile)
+onMounted(() => {
+  fetchProfile()
+})
 </script>

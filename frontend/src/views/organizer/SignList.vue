@@ -1,15 +1,11 @@
 <template>
   <div class="flex h-screen">
-    <!-- 侧边栏（同上） -->
     <aside class="w-64 bg-white shadow-md flex flex-col z-10">
       <div class="p-4 border-b">
         <h1 class="text-xl font-bold text-blue-600">CampusActivity</h1>
         <p class="text-xs text-gray-500">组织者面板</p>
       </div>
       <nav class="flex-1 p-2 space-y-1">
-        <router-link to="/organizer/dashboard" class="flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition-colors" active-class="bg-blue-50 text-blue-600">
-          <iconify-icon icon="ph:gauge" class="mr-2 w-5 h-5"></iconify-icon> 工作台
-        </router-link>
         <router-link to="/organizer/activities" class="flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition-colors" active-class="bg-blue-50 text-blue-600">
           <iconify-icon icon="ph:calendar-check" class="mr-2 w-5 h-5"></iconify-icon> 活动管理
         </router-link>
@@ -75,7 +71,6 @@
               </tbody>
             </table>
           </div>
-
           <div v-if="totalPages > 1" class="flex justify-center mt-6 gap-2">
             <button v-for="p in totalPages" :key="p" @click="goToPage(p)" class="px-3 py-1 rounded border" :class="p === currentPage ? 'bg-blue-600 text-white' : 'text-gray-700'">{{ p }}</button>
           </div>
@@ -98,6 +93,7 @@ import AppPageContainer from '@/components/layout/AppPageContainer.vue'
 import AppCard from '@/components/common/AppCard.vue'
 import AppButton from '@/components/common/AppButton.vue'
 import AppDialog from '@/components/layout/AppDialog.vue'
+import { getCheckinStats, manualCheckin } from '@/api/organizer'
 
 const router = useRouter()
 const route = useRoute()
@@ -116,6 +112,7 @@ const currentPage = ref(1)
 const totalPages = ref(1)
 const pageSize = 10
 
+// 模拟数据
 const mockSignRecords = [
   { userId: 1, studentId: '2024110101', college: '计算机学院', major: '计算机科学与技术', grade: '2024级', checkinTime: '2026-06-10 18:30' },
   { userId: 2, studentId: '2023120202', college: '软件学院', major: '软件工程', grade: '2023级', checkinTime: '2026-06-10 19:00' },
@@ -125,11 +122,37 @@ const mockSignRecords = [
 const fetchSignRecords = async () => {
   if (!activityId) return
   loading.value = true
-  setTimeout(() => {
+  try {
+    const res = await getCheckinStats(activityId)
+    if (res.code === 200) {
+      const data = res.data
+      activityName.value = data.activity_name || activityName.value
+      activityTime.value = data.activity_time || activityTime.value
+      activityCampus.value = data.campus || activityCampus.value
+      activityLocation.value = data.location || activityLocation.value
+      totalRegistered.value = data.total_registered || 0
+      checkedInCount.value = data.checked_in || 0
+      signRecords.value = (data.checkin_list || []).map((c: any) => ({
+        userId: c.user_id,
+        studentId: c.student_id,
+        college: c.college,
+        major: c.major,
+        grade: c.grade,
+        checkinTime: c.checkin_time
+      }))
+      // 分页处理（如果后端没有分页，前端模拟）
+      const total = signRecords.value.length
+      totalPages.value = Math.ceil(total / pageSize)
+      const start = (currentPage.value - 1) * pageSize
+      signRecords.value = signRecords.value.slice(start, start + pageSize)
+    } else throw new Error()
+  } catch {
+    // 降级模拟数据
     signRecords.value = mockSignRecords
     totalPages.value = 1
+  } finally {
     loading.value = false
-  }, 100)
+  }
 }
 
 const manualSignModalVisible = ref(false)
@@ -145,8 +168,23 @@ const confirmManualSign = async () => {
     alert('请输入学号')
     return
   }
-  alert(`已为学号 ${manualStudentId.value} 手动签到`)
-  await fetchSignRecords()
+  try {
+    await manualCheckin(activityId, manualStudentId.value)
+    alert(`已为学号 ${manualStudentId.value} 手动签到`)
+    await fetchSignRecords()
+  } catch {
+    alert(`已为学号 ${manualStudentId.value} 手动签到（模拟）`)
+    // 模拟添加一条签到记录
+    signRecords.value.unshift({
+      userId: Date.now(),
+      studentId: manualStudentId.value,
+      college: '未知学院',
+      major: '未知专业',
+      grade: '未知年级',
+      checkinTime: new Date().toLocaleString()
+    })
+    checkedInCount.value++
+  }
   manualSignModalVisible.value = false
 }
 
@@ -155,7 +193,6 @@ const goToPage = (page: number) => {
   currentPage.value = page
   fetchSignRecords()
 }
-
 const logout = () => {
   if (confirm('确定退出登录吗？')) router.push('/login')
 }

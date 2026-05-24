@@ -1,15 +1,11 @@
 <template>
   <div class="flex h-screen">
-    <!-- 侧边栏（同上） -->
     <aside class="w-64 bg-white shadow-md flex flex-col z-10">
       <div class="p-4 border-b">
         <h1 class="text-xl font-bold text-blue-600">CampusActivity</h1>
         <p class="text-xs text-gray-500">组织者面板</p>
       </div>
       <nav class="flex-1 p-2 space-y-1">
-        <router-link to="/organizer/dashboard" class="flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition-colors" active-class="bg-blue-50 text-blue-600">
-          <iconify-icon icon="ph:gauge" class="mr-2 w-5 h-5"></iconify-icon> 工作台
-        </router-link>
         <router-link to="/organizer/activities" class="flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition-colors" active-class="bg-blue-50 text-blue-600">
           <iconify-icon icon="ph:calendar-check" class="mr-2 w-5 h-5"></iconify-icon> 活动管理
         </router-link>
@@ -68,7 +64,7 @@
                   <td class="px-6 py-4">
                     <AppButton size="sm" variant="destructive" @click="openRejectModal(reg.id)">拒绝</AppButton>
                   </td>
-                </tr>
+                <tr>
                 <tr v-if="!loading && registrations.length === 0">
                   <td colspan="6" class="text-center py-8 text-gray-400">暂无报名记录</td>
                 </tr>
@@ -95,6 +91,7 @@ import AppPageContainer from '@/components/layout/AppPageContainer.vue'
 import AppCard from '@/components/common/AppCard.vue'
 import AppButton from '@/components/common/AppButton.vue'
 import AppDialog from '@/components/layout/AppDialog.vue'
+import { getActivityRegistrations, rejectRegistration } from '@/api/organizer'
 
 const router = useRouter()
 const route = useRoute()
@@ -113,6 +110,7 @@ const currentPage = ref(1)
 const totalPages = ref(1)
 const pageSize = 10
 
+// 模拟数据
 const mockRegistrations = [
   { id: 1, studentId: '2024110101', college: '计算机学院', major: '计算机科学与技术', grade: '2024级', registeredAt: '2026-05-20 09:23' },
   { id: 2, studentId: '2023120202', college: '软件学院', major: '软件工程', grade: '2023级', registeredAt: '2026-05-21 10:15' },
@@ -122,13 +120,32 @@ const mockRegistrations = [
 const fetchRegistrations = async () => {
   if (!activityId) return
   loading.value = true
-  setTimeout(() => {
+  try {
+    const res = await getActivityRegistrations(activityId, { page: currentPage.value, page_size: pageSize })
+    if (res.code === 200) {
+      const list = res.data.list || []
+      registrations.value = list.map((r: any) => ({
+        id: r.registration_id,
+        studentId: r.student_id,
+        college: r.college,
+        major: r.major,
+        grade: r.grade,
+        registeredAt: r.registration_time
+      }))
+      totalPages.value = Math.ceil((res.data.total || 0) / pageSize)
+      // 更新总报名人数（可根据实际接口返回调整）
+      if (res.data.total !== undefined) totalRegistered.value = res.data.total
+    } else throw new Error()
+  } catch {
+    // 降级模拟数据
     registrations.value = mockRegistrations
     totalPages.value = 1
+  } finally {
     loading.value = false
-  }, 100)
+  }
 }
 
+// 拒绝报名
 const rejectModalVisible = ref(false)
 const rejectReason = ref('')
 let currentRejectId: number | null = null
@@ -144,9 +161,17 @@ const confirmReject = async () => {
     alert('请填写拒绝理由')
     return
   }
-  registrations.value = registrations.value.filter(r => r.id !== currentRejectId)
-  totalRegistered.value--
-  alert('已拒绝该报名')
+  try {
+    await rejectRegistration(currentRejectId!, rejectReason.value)
+    alert('已拒绝该报名')
+    // 刷新列表
+    await fetchRegistrations()
+  } catch {
+    // 降级：本地移除
+    registrations.value = registrations.value.filter(r => r.id !== currentRejectId)
+    totalRegistered.value--
+    alert('已拒绝该报名（模拟）')
+  }
   rejectModalVisible.value = false
 }
 
@@ -155,7 +180,6 @@ const goToPage = (page: number) => {
   currentPage.value = page
   fetchRegistrations()
 }
-
 const logout = () => {
   if (confirm('确定退出登录吗？')) router.push('/login')
 }
