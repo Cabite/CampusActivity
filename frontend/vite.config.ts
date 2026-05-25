@@ -3,6 +3,11 @@ import vue from '@vitejs/plugin-vue'
 import { viteMockServe } from 'vite-plugin-mock'
 import { fileURLToPath, URL } from 'node:url'
 
+const apiProxy = {
+  target: 'http://localhost:8000',
+  changeOrigin: true,
+}
+
 export default defineConfig({
   plugins: [
     vue(),
@@ -19,10 +24,13 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      '/api': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-      },
+      '/auth': apiProxy,
+      '/user': apiProxy,
+      '/activities': apiProxy,
+      '/categories': apiProxy,
+      '/notifications': apiProxy,
+      '/announcements': apiProxy,
+      '/leaderboard': apiProxy,
     },
   },
 })

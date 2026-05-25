@@ -18,10 +18,10 @@ export interface LoginData {
   expires_in: number
 }
 
+/** 注册成功自动登录 */
 export interface RegisterData {
-  user_id: number
-  role: string
-  status: string
+  userId: number
+  token: string
 }
 
 export interface UserProfile {
@@ -46,28 +46,29 @@ export interface ActivityListItem {
   activity_id: number
   name: string
   start_time: string
-  end_time: string
+  end_time?: string
   category_name: string
   category_path?: string
   location: string
   campus: string
   current_participants: number
   max_participants: number
-  status: string
+  status?: string
 }
 
 export interface ActivityDetail extends ActivityListItem {
   organizer_id: number
   organizer_name: string
   category_id: number
+  end_time: string
   registration_deadline: string
   cancel_deadline: string
   description: string
-  reject_reason?: string | null
-  created_at: string
-  updated_at: string
+  status: string
   is_registered: boolean
   registration_status: string | null
+  /** 当前用户是否已签到 */
+  check_status?: boolean | string
 }
 
 export interface CategoryNode {
@@ -85,9 +86,6 @@ export interface RegistrationItem {
   start_time: string
   end_time: string
   location?: string
-  category_name?: string
-  current_participants?: number
-  max_participants?: number
   registration_time: string
   status: string
   checkin_status: 'checked' | 'not_checked'
@@ -108,14 +106,14 @@ export interface AnnouncementItem {
   announcement_id: number
   title: string
   content: string
-  created_at: string
-  expires_at: string
+  start_time: string
+  end_time: string
 }
 
 export interface RankingItem {
   rank: number
   user_id: number
-  username: string
+  username?: string
   student_id: string
   college: string
   grade: string

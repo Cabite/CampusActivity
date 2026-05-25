@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { getUserRanking } from '@/api/statistics'
+import { getLeaderboard } from '@/api/statistics'
 import { showApiError } from '@/api/request'
 import { useAuthStore } from '@/stores/auth'
 import type { RankingItem } from '@/types/api'
@@ -28,14 +28,9 @@ async function fetchRanking() {
       page_size: pageSize,
       period: filters.value.period,
     }
-    if (filters.value.college) {
-      params.scope = 'college'
-      params.filter_value = filters.value.college
-    } else if (filters.value.grade) {
-      params.scope = 'grade'
-      params.filter_value = filters.value.grade
-    }
-    const data = await getUserRanking(params)
+    if (filters.value.college) params.college = filters.value.college
+    if (filters.value.grade) params.grade = filters.value.grade
+    const data = await getLeaderboard(params)
     list.value = data.list
     total.value = data.total
   } catch (e) {
@@ -101,7 +96,7 @@ function isCurrentUser(item: RankingItem) {
                 <Trophy v-if="item.rank === 1" class="absolute -left-2 h-5 w-5 text-amber-500" />
                 {{ item.rank }}
               </td>
-              <td>{{ item.username }}</td>
+              <td>{{ item.username || item.student_id }}</td>
               <td class="text-right">{{ item.effective_participation_count }}</td>
             </tr>
             <tr v-for="n in Math.max(0, 6 - list.length)" :key="'e' + n">

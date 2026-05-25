@@ -54,7 +54,7 @@ async function openMessage(item: NotificationItem) {
 
 function openAnnouncement(item: AnnouncementItem) {
   detailTitle.value = item.title
-  detailTime.value = formatDateTime(item.created_at)
+  detailTime.value = `${formatDateTime(item.start_time)} — ${formatDateTime(item.end_time)}`
   detailContent.value = item.content
   showDetail.value = true
 }
@@ -115,7 +115,7 @@ function openAnnouncement(item: AnnouncementItem) {
               >
                 <td><Mail class="h-4 w-4 text-gray-400" /></td>
                 <td>{{ item.title }}</td>
-                <td class="text-gray-500">{{ formatDateTime(item.created_at) }}</td>
+                <td class="text-gray-500">{{ formatDateTime(item.start_time) }}</td>
               </tr>
             </template>
           </tbody>

@@ -30,8 +30,9 @@ export function logout() {
   return apiPost<null>('/auth/logout')
 }
 
+/** 修改密码（文档 1.7） */
 export function changePassword(old_password: string, new_password: string, confirm_password: string) {
-  return apiPost<null>('/user/change-password', {
+  return apiPost<null>('/user/reset-password', {
     old_password,
     new_password,
     confirm_password,

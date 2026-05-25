@@ -44,16 +44,19 @@ const activities = [
 
 export default [
   {
-    url: '/api/activities',
+    url: '/activities',
     method: 'get',
     response: ({ query }: { query: Record<string, string> }) => {
       let list = [...activities]
       if (query.status) {
         const statuses = query.status.split(',')
-        list = list.filter((a) => statuses.includes(a.status))
+        list = list.filter((a) => statuses.includes(a.status || 'open'))
       }
       if (query.keyword) {
         list = list.filter((a) => a.name.includes(query.keyword))
+      }
+      if (query.activity_id) {
+        list = list.filter((a) => String(a.activity_id) === String(query.activity_id))
       }
       return {
         code: 200,
@@ -63,7 +66,7 @@ export default [
     },
   },
   {
-    url: /\/api\/activities\/\d+$/,
+    url: /\/activities\/\d+$/,
     method: 'get',
     response: ({ url }: { url: string }) => {
       const id = Number(url.split('/').pop())
@@ -82,14 +85,48 @@ export default [
             '本次活动旨在促进校园体育文化建设，欢迎同学们积极参与。活动包含热身、主项训练与放松环节。',
           is_registered: false,
           registration_status: null,
-          created_at: '2026-05-01 10:00:00',
-          updated_at: '2026-05-01 10:00:00',
+          check_status: false,
         },
       }
     },
   },
   {
-    url: '/api/categories',
+    url: /\/activities\/\d+\/register$/,
+    method: 'post',
+    response: ({ url }: { url: string }) => {
+      const id = Number(url.split('/')[2])
+      const item = activities.find((a) => a.activity_id === id) || activities[0]
+      return {
+        code: 200,
+        message: '报名成功',
+        data: {
+          registration_id: 1,
+          status: 'registered',
+          remaining_slots: item.max_participants - item.current_participants - 1,
+        },
+      }
+    },
+  },
+  {
+    url: /\/activities\/\d+\/register$/,
+    method: 'delete',
+    response: () => ({
+      code: 200,
+      message: '取消报名成功，名额将在2分钟后释放',
+      data: { release_time: '2027-01-01 12:02:00' },
+    }),
+  },
+  {
+    url: /\/activities\/\d+\/checkin$/,
+    method: 'post',
+    response: () => ({
+      code: 200,
+      message: '签到成功',
+      data: { checkin_id: 1, checkin_time: '2027-01-01 11:58:00' },
+    }),
+  },
+  {
+    url: '/categories',
     method: 'get',
     response: () => ({
       code: 200,

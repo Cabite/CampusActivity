@@ -2,7 +2,7 @@ import type { MockMethod } from 'vite-plugin-mock'
 
 export default [
   {
-    url: '/api/user/profile',
+    url: '/user/profile',
     method: 'get',
     response: () => ({
       code: 200,
@@ -24,8 +24,22 @@ export default [
     }),
   },
   {
-    url: '/api/user/profile',
+    url: '/user/profile',
     method: 'put',
     response: () => ({ code: 200, message: '更新成功', data: null }),
+  },
+  {
+    url: '/user/avatar',
+    method: 'post',
+    response: () => ({
+      code: 200,
+      message: '头像更新成功',
+      data: { avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=mock' },
+    }),
+  },
+  {
+    url: '/user/account',
+    method: 'delete',
+    response: () => ({ code: 200, message: '账号已注销', data: null }),
   },
 ] as MockMethod[]

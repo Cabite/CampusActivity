@@ -4,7 +4,7 @@ import { useRouter, RouterLink } from 'vue-router'
 import { User, Lock, Mail, Phone } from 'lucide-vue-next'
 import { AppCard, AppForm, AppPageContainer } from '@/components'
 import type { FormField } from '@/components/layout/AppForm.vue'
-import { register, login } from '@/api/auth'
+import { register } from '@/api/auth'
 import { showApiError } from '@/api/request'
 import { useAuthStore } from '@/stores/auth'
 import { useUserStore } from '@/stores/user'
@@ -52,7 +52,7 @@ async function handleRegister(values: Record<string, string>) {
 
   loading.value = true
   try {
-    await register({
+    const reg = await register({
       student_id: payload.student_id,
       email: payload.email,
       username: payload.username,
@@ -64,10 +64,9 @@ async function handleRegister(values: Record<string, string>) {
       grade: extra.value.grade,
       phone: payload.phone || undefined,
     })
-    const data = await login(payload.student_id, payload.password)
-    auth.setAuth(data.token, data.user_id)
+    auth.setAuth(reg.token, reg.userId)
     await userStore.fetchProfile()
-    toast.success('注册成功')
+    toast.success('注册成功，已自动登录')
     router.push('/activities')
   } catch (e) {
     showApiError(e)

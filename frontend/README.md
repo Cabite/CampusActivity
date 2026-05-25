@@ -35,4 +35,15 @@ src/
   utils/            # 工具函数、校验、常量
   views/            # 页面
   types/            # 类型定义
+mock/               # 开发 Mock（路径无 /api 前缀）
 ```
+
+## 最新接口文档对齐说明
+
+- 基础路径：无 `/api` 前缀，`VITE_API_BASE_URL` 留空
+- 报名：`POST /activities/{id}/register` · 取消：`DELETE /activities/{id}/register`
+- 我的报名：`GET /user/registrations`（`name`、`activity_id`、`category_id`、`start_date`、`campus`）
+- 签到：`POST /activities/{id}/checkin`
+- 排行榜：`GET /leaderboard`
+- 注册成功返回 `userId` + `token`，前端自动登录
+- 系统公告字段：`start_time` / `end_time`
