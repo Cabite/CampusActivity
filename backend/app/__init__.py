@@ -10,7 +10,7 @@ def create_app(config_object=None):
     app.config.from_object(config_object or get_config())
 
     app.register_blueprint(api_v1)
-    app.register_blueprint(api_v1, url_prefix="/api", name="api_v1_legacy")
+    # app.register_blueprint(api_v1, url_prefix="/api", name="api_v1_legacy")
     register_error_handlers(app)
     register_cors_headers(app)
 
