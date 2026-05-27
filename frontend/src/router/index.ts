@@ -4,6 +4,9 @@ import { useAuthStore } from '@/stores/auth'
 const router = createRouter({
   history: createWebHistory(),
   routes: [
+    // ✅ 新增：根路径直接重定向到登录页
+    { path: '/', redirect: '/login' },
+
     // 公开路由
     {
       path: '/login',
@@ -17,11 +20,11 @@ const router = createRouter({
       component: () => import('@/views/RegisterView.vue'),
       meta: { guest: true },
     },
-    // 组织者注册（公开）
+    // 组织者注册（公开）—— 已修正组件路径
     {
       path: '/organizer/register',
       name: 'organizer-register',
-      component: () => import('@/views/Register.vue'),
+      component: () => import('@/views/organizer/Register.vue'),
       meta: { guest: true },
     },
     // 学生端布局（需要登录）
@@ -162,9 +165,17 @@ router.beforeEach((to) => {
   }
   // 已登录用户访问 guest 页面，跳转到默认首页
   if (to.meta.guest && auth.isLoggedIn) {
-    return { name: 'activities' }
+    // 根据角色跳转
+    if (auth.role === 'organizer') return '/organizer/activities'
+    if (auth.role === 'admin') return '/admin/audit'
+    return '/activities'
   }
-  // 角色权限检查（可根据需要实现，暂时只检查是否登录）
+  // 角色权限检查（可选）
+  if (to.meta.role && auth.role !== to.meta.role) {
+    if (auth.role === 'organizer') return '/organizer/activities'
+    if (auth.role === 'admin') return '/admin/audit'
+    return '/activities'
+  }
   return true
 })
 

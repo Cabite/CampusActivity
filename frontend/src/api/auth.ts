@@ -19,32 +19,25 @@ export interface OrganizerRegisterPayload {
   org_name: string
   password: string
   confirm_password: string
-  org_proof_text: string
+  org_proof_text?: string
   org_proof_image?: string
 }
 
-export interface LoginPayload {
-  role: 'user' | 'organizer' | 'admin'
-  account: string
-  password: string
+// 登录：接收对象参数 { role, account, password }
+export function login(data: { role: string; account: string; password: string }) {
+  return apiPost<LoginData>('/auth/login', data)
 }
 
-export function login(payload: LoginPayload) {
-  return apiPost<LoginData>('/auth/login', {
-    role: payload.role,
-    account: payload.account,
-    password: payload.password,
-  })
-}
-
+// 普通用户注册
 export function register(payload: RegisterPayload) {
   return apiPost<RegisterData>('/auth/register/user', payload)
 }
 
+// 组织者注册
 export function registerOrganizer(payload: OrganizerRegisterPayload) {
-  return apiPost<RegisterData>('/auth/register/organizer', payload)
+  return apiPost<{ user_id: number; status: string; token: string }>('/auth/register/organizer', payload)
 }
 
+// 退出登录
 export function logout() {
-  return apiPost<null>('/auth/logout')
-}
+  return apiPost<null>('/auth/logout')}

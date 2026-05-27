@@ -121,3 +121,39 @@ export function getStatistics(params?: {
     campus_distribution: Array<{ campus: string; count: number }>
   }>('/admin/statistics', params)
 }
+
+// 审核活动（通过/拒绝）
+export function reviewActivity(activityId: number, action: 'approve' | 'reject', rejectReason?: string) {
+  return apiPut<{ activity_id: number; new_status: string }>(`/admin/activities/${activityId}/review`, {
+    action,
+    reject_reason: rejectReason,
+  })
+}
+
+// 下架活动
+export function removeActivity(activityId: number, reason: string) {
+  return apiPut<null>(`/admin/activities/${activityId}/remove`, { reason })
+}
+
+// ==================== 公告管理 ====================
+
+/**
+ * 获取公告列表
+ */
+export function getAnnouncements() {
+  return apiGet<any[]>('/announcements')
+}
+
+/**
+ * 发布公告
+ */
+export function publishAnnouncement(data: { title: string; content: string; start_time?: string; end_time?: string }) {
+  return apiPost<{ announcement_id: number }>('/admin/announcements', data)
+}
+
+/**
+ * 删除公告（使用 removeAnnouncement 避免与可能的全局声明冲突）
+ */
+export function removeAnnouncement(id: number) {
+  return apiDelete<null>(`/admin/announcements/${id}`)
+}

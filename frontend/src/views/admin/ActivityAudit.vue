@@ -1,32 +1,6 @@
 <template>
   <div class="flex h-screen">
-    <aside class="w-64 bg-white shadow-md flex flex-col z-10">
-      <div class="p-4 border-b">
-        <h1 class="text-xl font-bold text-blue-600">CampusActivity</h1>
-        <p class="text-xs text-gray-500">管理员面板</p>
-      </div>
-      <nav class="flex-1 p-2 space-y-1">
-        <router-link to="/admin/audit" class="flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition-colors" active-class="bg-blue-50 text-blue-600">
-          <iconify-icon icon="ph:check-circle" class="mr-2 w-5 h-5"></iconify-icon> 活动审核
-        </router-link>
-        <router-link to="/admin/users" class="flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition-colors" active-class="bg-blue-50 text-blue-600">
-          <iconify-icon icon="ph:users" class="mr-2 w-5 h-5"></iconify-icon> 用户管理
-        </router-link>
-        <router-link to="/admin/announcements" class="flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition-colors" active-class="bg-blue-50 text-blue-600">
-          <iconify-icon icon="ph:megaphone" class="mr-2 w-5 h-5"></iconify-icon> 系统公告
-        </router-link>
-        <router-link to="/admin/statistics" class="flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition-colors" active-class="bg-blue-50 text-blue-600">
-          <iconify-icon icon="ph:chart-bar" class="mr-2 w-5 h-5"></iconify-icon> 平台统计
-        </router-link>
-        <router-link to="/admin/profile" class="flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition-colors" active-class="bg-blue-50 text-blue-600">
-          <iconify-icon icon="ph:user-circle" class="mr-2 w-5 h-5"></iconify-icon> 个人中心
-        </router-link>
-      </nav>
-      <div class="p-4 border-t text-sm text-gray-500">
-        <p class="truncate">管理员</p>
-        <button @click="logout" class="text-red-500 hover:text-red-700 mt-2 text-left">退出登录</button>
-      </div>
-    </aside>
+    <AdminSidebar />
 
     <main class="flex-1 overflow-y-auto bg-gradient-to-br from-blue-50 to-blue-100 p-6">
       <AppPageContainer variant="gradient" padding="lg" max-width="2xl">
@@ -65,7 +39,6 @@
           </div>
         </div>
 
-        <!-- 活动列表表格 -->
         <AppCard :loading="loading">
           <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
@@ -80,7 +53,7 @@
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-100">
-                <tr v-for="act in activities" :key="act.id" class="hover:bg-gray-50 cursor-pointer" @dblclick="goToDetail(act.id)">
+                <tr v-for="act in activities" :key="act.activity_id" class="hover:bg-gray-50 cursor-pointer" @dblclick="goToDetail(act.activity_id)">
                   <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ act.name }}</td>
                   <td class="px-6 py-4 text-sm text-gray-500">{{ act.organizer_name }}</td>
                   <td class="px-6 py-4 text-sm text-gray-500">{{ act.category_name }}</td>
@@ -110,8 +83,9 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import AppPageContainer from '@/components/layout/AppPageContainer.vue'
 import AppCard from '@/components/common/AppCard.vue'
-import AppButton from '@/components/common/AppButton.vue'
 import { getAdminActivities, getCategories } from '@/api/admin'
+import { showApiError } from '@/api/request'
+import AdminSidebar from '@/components/layout/AdminSidebar.vue'
 
 const router = useRouter()
 const loading = ref(false)
@@ -120,28 +94,12 @@ const currentPage = ref(1)
 const totalPages = ref(1)
 const pageSize = 10
 const categories = ref<{ id: number; name: string }[]>([])
-
 const filters = reactive({
   status: 'pending',
   categoryId: '',
   startDateFrom: '',
   startDateTo: ''
 })
-
-// 模拟数据
-const mockCategories = [
-  { id: 1, name: '学术类' },
-  { id: 2, name: '文体类' },
-  { id: 3, name: '志愿服务类' }
-]
-const mockActivitiesPending = [
-  { id: 1, name: '校园歌手大赛', organizer_name: '学生会文艺部', category_name: '文体类', start_time: '2026-06-10 18:00', campus: '校本部', status: 'pending' },
-  { id: 2, name: '春季48h编程马拉松', organizer_name: '计算机学院科协', category_name: '学术类', start_time: '2026-05-20 14:00', campus: '北校区', status: 'pending' }
-]
-const mockActivitiesEnd = [
-  { id: 3, name: 'AI学术讲座', organizer_name: '计算机学院科协', category_name: '学术类', start_time: '2026-06-15 14:00', campus: '北校区', status: 'approved' },
-  { id: 4, name: '心理健康讲座', organizer_name: '心理咨询中心', category_name: '学术类', start_time: '2026-05-25 14:00', campus: '校本部', status: 'rejected' }
-]
 
 const statusText = (status: string) => {
   const map: Record<string, string> = { pending: '待审核', approved: '已通过', rejected: '已拒绝' }
@@ -154,22 +112,15 @@ const statusColorClass = (status: string) => {
 
 const fetchCategories = async () => {
   try {
-    const res = await getCategories()
-    if (res.code === 200 && res.data) {
-      // 处理树形结构
-      const flat: any[] = []
-      res.data.forEach((cat: any) => {
-        flat.push({ id: cat.id, name: cat.name })
-        if (cat.children) {
-          cat.children.forEach((child: any) => flat.push({ id: child.id, name: child.name }))
-        }
-      })
-      categories.value = flat
-    } else {
-      throw new Error()
-    }
-  } catch {
-    categories.value = mockCategories
+    const data = await getCategories()
+    const flat: any[] = []
+    data.forEach((cat: any) => {
+      flat.push({ id: cat.id, name: cat.name })
+      if (cat.children) cat.children.forEach((child: any) => flat.push({ id: child.id, name: child.name }))
+    })
+    categories.value = flat
+  } catch (e) {
+    showApiError(e, '获取分类失败')
   }
 }
 
@@ -177,33 +128,21 @@ const fetchActivities = async () => {
   loading.value = true
   try {
     let statusParam = ''
-    if (filters.status === 'pending') {
-      statusParam = 'pending'
-    } else if (filters.status === 'end') {
-      statusParam = 'approved,rejected,removed'
-    }
+    if (filters.status === 'pending') statusParam = 'pending'
+    else if (filters.status === 'end') statusParam = 'approved,rejected,removed'
     const params: any = {
       page: currentPage.value,
       page_size: pageSize,
       status: statusParam || undefined,
-      category_id: filters.categoryId || undefined,
+      category_id: filters.categoryId ? Number(filters.categoryId) : undefined,
       start_date: filters.startDateFrom || undefined,
       end_date: filters.startDateTo || undefined
     }
-    const res = await getAdminActivities(params)
-    if (res.code === 200) {
-      activities.value = res.data.list
-      totalPages.value = Math.ceil(res.data.total / pageSize)
-    } else {
-      throw new Error()
-    }
-  } catch {
-    if (filters.status === 'pending') {
-      activities.value = mockActivitiesPending
-    } else {
-      activities.value = mockActivitiesEnd
-    }
-    totalPages.value = 1
+    const data = await getAdminActivities(params)
+    activities.value = data.items
+    totalPages.value = Math.ceil(data.total / pageSize)
+  } catch (e) {
+    showApiError(e, '获取审核列表失败')
   } finally {
     loading.value = false
   }
@@ -225,10 +164,6 @@ const goToPage = (page: number) => {
   fetchActivities()
 }
 const goToDetail = (id: number) => router.push(`/admin/audit/${id}`)
-
-const logout = () => {
-  if (confirm('确定退出登录吗？')) router.push('/login')
-}
 
 onMounted(() => {
   fetchCategories()

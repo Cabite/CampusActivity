@@ -1,32 +1,6 @@
 <template>
   <div class="flex h-screen">
-    <aside class="w-64 bg-white shadow-md flex flex-col z-10">
-      <div class="p-4 border-b">
-        <h1 class="text-xl font-bold text-blue-600">CampusActivity</h1>
-        <p class="text-xs text-gray-500">管理员面板</p>
-      </div>
-      <nav class="flex-1 p-2 space-y-1">
-        <router-link to="/admin/audit" class="flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition-colors" active-class="bg-blue-50 text-blue-600">
-          <iconify-icon icon="ph:check-circle" class="mr-2 w-5 h-5"></iconify-icon> 活动审核
-        </router-link>
-        <router-link to="/admin/users" class="flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition-colors" active-class="bg-blue-50 text-blue-600">
-          <iconify-icon icon="ph:users" class="mr-2 w-5 h-5"></iconify-icon> 用户管理
-        </router-link>
-        <router-link to="/admin/announcements" class="flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition-colors" active-class="bg-blue-50 text-blue-600">
-          <iconify-icon icon="ph:megaphone" class="mr-2 w-5 h-5"></iconify-icon> 系统公告
-        </router-link>
-        <router-link to="/admin/statistics" class="flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition-colors" active-class="bg-blue-50 text-blue-600">
-          <iconify-icon icon="ph:chart-bar" class="mr-2 w-5 h-5"></iconify-icon> 平台统计
-        </router-link>
-        <router-link to="/admin/profile" class="flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition-colors" active-class="bg-blue-50 text-blue-600">
-          <iconify-icon icon="ph:user-circle" class="mr-2 w-5 h-5"></iconify-icon> 个人中心
-        </router-link>
-      </nav>
-      <div class="p-4 border-t text-sm text-gray-500">
-        <p class="truncate">管理员</p>
-        <button @click="logout" class="text-red-500 hover:text-red-700 mt-2 text-left">退出登录</button>
-      </div>
-    </aside>
+    <AdminSidebar />
 
     <main class="flex-1 overflow-y-auto bg-gradient-to-br from-blue-50 to-blue-100 p-6">
       <AppPageContainer variant="gradient" padding="lg" max-width="2xl">
@@ -44,7 +18,6 @@
             </span>
           </div>
 
-          <!-- 只读信息展示 -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5 mb-8">
             <div><label class="block text-sm font-medium text-gray-700">活动名称</label><input type="text" v-model="activity.name" class="w-full border rounded-lg px-3 py-2 bg-gray-50" readonly></div>
             <div><label class="block text-sm font-medium text-gray-700">分类</label><input type="text" v-model="activity.category_name" class="w-full border rounded-lg px-3 py-2 bg-gray-50" readonly></div>
@@ -61,7 +34,6 @@
             <div class="md:col-span-2"><label class="block text-sm font-medium text-gray-700">活动简介</label><textarea v-model="activity.description" rows="3" class="w-full border rounded-lg px-3 py-2 bg-gray-50" readonly></textarea></div>
           </div>
 
-          <!-- 操作按钮 -->
           <div class="flex gap-3 pt-4 border-t" v-if="activity.status === 'pending'">
             <AppButton variant="blue" @click="approve">通过</AppButton>
             <AppButton variant="destructive" @click="openRejectModal">拒绝</AppButton>
@@ -71,12 +43,10 @@
           </div>
         </AppCard>
 
-        <!-- 拒绝理由弹窗 -->
         <AppDialog v-model:open="rejectModalVisible" title="拒绝理由" confirm-text="确认拒绝" cancel-text="取消" @confirm="confirmReject">
           <textarea v-model="rejectReason" rows="3" placeholder="请输入拒绝理由" class="w-full border rounded-lg px-3 py-2"></textarea>
         </AppDialog>
 
-        <!-- 下架理由弹窗 -->
         <AppDialog v-model:open="removeModalVisible" title="下架理由" confirm-text="确认下架" cancel-text="取消" @confirm="confirmRemove">
           <textarea v-model="removeReason" rows="3" placeholder="请输入下架理由" class="w-full border rounded-lg px-3 py-2"></textarea>
         </AppDialog>
@@ -93,6 +63,8 @@ import AppCard from '@/components/common/AppCard.vue'
 import AppButton from '@/components/common/AppButton.vue'
 import AppDialog from '@/components/layout/AppDialog.vue'
 import { getActivityDetail, reviewActivity, removeActivity } from '@/api/admin'
+import { showApiError } from '@/api/request'
+import AdminSidebar from '@/components/layout/AdminSidebar.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -100,7 +72,6 @@ const activityId = Number(route.params.id)
 const loading = ref(false)
 
 const activity = reactive({
-  id: 0,
   name: '',
   category_name: '',
   organizer_name: '',
@@ -117,94 +88,53 @@ const activity = reactive({
   checked_in_count: 0
 })
 
-// 模拟数据
-const mockActivityDetail = {
-  id: 1,
-  name: '校园歌手大赛',
-  category_name: '文体类',
-  organizer_name: '学生会文艺部',
-  start_time: '2026-06-10 18:00',
-  end_time: '2026-06-10 21:00',
-  campus: '校本部',
-  location: '报告厅',
-  max_participants: 100,
-  current_participants: 45,
-  registration_deadline: '2026-06-05 23:59',
-  cancel_deadline: '2026-06-09 23:59',
-  description: '全校歌唱比赛',
-  status: 'pending',
-  checked_in_count: 0
-}
-
-const isActivityStarted = computed(() => {
-  return new Date(activity.start_time) <= new Date()
-})
+const isActivityStarted = computed(() => new Date(activity.start_time) <= new Date())
 
 const statusText = (status: string) => {
-  const map: Record<string, string> = {
-    pending: '待审核',
-    approved: '已通过',
-    rejected: '已拒绝',
-    removed: '已下架'
-  }
+  const map: Record<string, string> = { pending: '待审核', approved: '已通过', rejected: '已拒绝', removed: '已下架' }
   return map[status] || status
 }
 const statusColorClass = (status: string) => {
-  const map: Record<string, string> = {
-    pending: 'bg-yellow-100 text-yellow-700',
-    approved: 'bg-green-100 text-green-700',
-    rejected: 'bg-red-100 text-red-700',
-    removed: 'bg-gray-100 text-gray-700'
-  }
-  return map[status] || 'bg-gray-100 text-gray-700'
+  const map: Record<string, string> = { pending: 'bg-yellow-100 text-yellow-700', approved: 'bg-green-100 text-green-700', rejected: 'bg-red-100 text-red-700', removed: 'bg-gray-100 text-gray-700' }
+  return map[status] || 'bg-gray-100'
 }
 
 const fetchActivityDetail = async () => {
   loading.value = true
   try {
-    const res = await getActivityDetail(activityId)
-    if (res.code === 200) {
-      const d = res.data
-      Object.assign(activity, {
-        id: d.activity_id,
-        name: d.name,
-        category_name: d.category_name,
-        organizer_name: d.organizer_name,
-        start_time: d.start_time,
-        end_time: d.end_time,
-        campus: d.campus,
-        location: d.location,
-        max_participants: d.max_participants,
-        current_participants: d.current_participants,
-        registration_deadline: d.registration_deadline,
-        cancel_deadline: d.cancel_deadline,
-        description: d.description,
-        status: d.status,
-        checked_in_count: d.checked_in_count || 0
-      })
-    } else {
-      throw new Error()
-    }
-  } catch {
-    Object.assign(activity, mockActivityDetail, { id: activityId })
+    const data = await getActivityDetail(activityId) as any // 类型断言绕过 TS 检查
+    activity.name = data.name
+    activity.category_name = data.category_name
+    activity.organizer_name = data.organizer_name
+    activity.start_time = data.start_time
+    activity.end_time = data.end_time
+    activity.campus = data.campus
+    activity.location = data.location
+    activity.max_participants = data.max_participants
+    activity.current_participants = data.current_participants
+    activity.registration_deadline = data.registration_deadline
+    activity.cancel_deadline = data.cancel_deadline
+    activity.description = data.description
+    activity.status = data.status
+    activity.checked_in_count = data.checked_in_count || 0
+  } catch (e) {
+    showApiError(e, '获取活动详情失败')
   } finally {
     loading.value = false
   }
 }
 
-// 通过
 const approve = async () => {
   if (!confirm('确定通过该活动吗？')) return
   try {
     await reviewActivity(activityId, 'approve')
     alert('审核通过')
     router.push('/admin/audit')
-  } catch {
-    alert('操作失败')
+  } catch (e) {
+    showApiError(e, '审核失败')
   }
 }
 
-// 拒绝
 const rejectModalVisible = ref(false)
 const rejectReason = ref('')
 const openRejectModal = () => {
@@ -220,12 +150,11 @@ const confirmReject = async () => {
     await reviewActivity(activityId, 'reject', rejectReason.value)
     alert('已拒绝')
     router.push('/admin/audit')
-  } catch {
-    alert('操作失败')
+  } catch (e) {
+    showApiError(e, '拒绝失败')
   }
 }
 
-// 下架
 const removeModalVisible = ref(false)
 const removeReason = ref('')
 const openRemoveModal = () => {
@@ -241,16 +170,12 @@ const confirmRemove = async () => {
     await removeActivity(activityId, removeReason.value)
     alert('活动已下架')
     router.push('/admin/audit')
-  } catch {
-    alert('操作失败')
+  } catch (e) {
+    showApiError(e, '下架失败')
   }
 }
 
 const goBack = () => router.back()
-
-const logout = () => {
-  if (confirm('确定退出登录吗？')) router.push('/login')
-}
 
 onMounted(() => {
   fetchActivityDetail()

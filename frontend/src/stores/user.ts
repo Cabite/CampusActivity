@@ -1,24 +1,28 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { getProfile } from '@/api/user'
-import type { UserProfile } from '@/types/api'
 
 export const useUserStore = defineStore('user', () => {
-  const profile = ref<UserProfile | null>(null)
+  const userInfo = ref<any>(null)
   const loading = ref(false)
 
-  async function fetchProfile() {
+  const fetchProfile = async () => {
+    const token = localStorage.getItem('token')
+    if (!token) return
     loading.value = true
     try {
-      profile.value = await getProfile()
+      const data = await getProfile()
+      userInfo.value = data
+    } catch (error) {
+      console.error('获取用户信息失败', error)
     } finally {
       loading.value = false
     }
   }
 
-  function clearProfile() {
-    profile.value = null
+  const clearProfile = () => {
+    userInfo.value = null
   }
 
-  return { profile, loading, fetchProfile, clearProfile }
+  return { userInfo, loading, fetchProfile, clearProfile }
 })

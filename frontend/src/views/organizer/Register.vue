@@ -69,7 +69,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import AppButton from '@/components/common/AppButton.vue'
-import {  } from '@/api/auth' // 稍后创建这个API文件
+import { registerOrganizer } from '@/api/auth'
 
 const router = useRouter()
 const loading = ref(false)
@@ -81,7 +81,7 @@ const form = ref({
   password: '',
   confirm_password: '',
   org_proof_text: '',
-  org_proof_image: '' // 存储 base64 或上传后的 URL，这里简化，实际应上传到服务器
+  org_proof_image: ''
 })
 
 const handleFileChange = (e: Event) => {
@@ -96,7 +96,6 @@ const handleFileChange = (e: Event) => {
       alert('只支持 jpg/png 格式')
       return
     }
-    // 实际应上传到服务器，这里模拟保存文件名
     form.value.org_proof_image = file.name
   }
 }
@@ -112,8 +111,8 @@ const handleRegister = async () => {
   }
   loading.value = true
   try {
-    // 调用注册接口
-    const res = await registerOrganizer({
+    // registerOrganizer 返回的数据已经解包，直接包含 token, user_id, status
+    const { token, user_id } = await registerOrganizer({
       email: form.value.email,
       org_name: form.value.org_name,
       password: form.value.password,
@@ -121,16 +120,11 @@ const handleRegister = async () => {
       org_proof_text: form.value.org_proof_text,
       org_proof_image: form.value.org_proof_image || undefined
     })
-    if (res.code === 200) {
-      // 注册成功并自动登录
-      const { token, user_id } = res.data
-      localStorage.setItem('token', token)
-      localStorage.setItem('role', 'organizer')
-      // 跳转到组织者活动管理页面
-      router.push('/organizer/activities')
-    } else {
-      alert(res.message || '注册失败')
-    }
+    localStorage.setItem('token', token)
+    localStorage.setItem('user_id', String(user_id))
+    localStorage.setItem('role', 'organizer')
+    alert('注册成功，请等待管理员审核')
+    router.push('/organizer/activities')
   } catch (err: any) {
     alert(err.message || '网络错误，请稍后重试')
   } finally {

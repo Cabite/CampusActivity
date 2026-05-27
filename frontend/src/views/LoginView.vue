@@ -18,13 +18,13 @@ const userStore = useUserStore()
 const roleTab = ref<'user' | 'organizer' | 'admin'>('user')
 const isSubmitting = ref(false)
 
-const roleTabs = [
+// 显式声明类型，解决 string 不能赋值给联合类型的问题
+const roleTabs: { value: 'user' | 'organizer' | 'admin'; label: string }[] = [
   { value: 'user', label: '普通用户' },
   { value: 'organizer', label: '组织者' },
   { value: 'admin', label: '管理员' },
-] as const
+]
 
-// 根据角色动态调整表单字段的标签和提示
 const loginFields = ref<FormField[]>([
   {
     name: 'account',
@@ -44,7 +44,6 @@ const loginFields = ref<FormField[]>([
   },
 ])
 
-// 监听角色变化，改变字段的提示文本
 const updateFieldHint = () => {
   if (roleTab.value === 'organizer') {
     loginFields.value[0].label = '邮箱'
@@ -69,13 +68,10 @@ async function handleLogin(values: Record<string, string>) {
       account: values.account,
       password: values.password,
     })
-    auth.setAuth(data.token, data.user_id)
-    // 根据角色设置 localStorage 的 role 字段
-    localStorage.setItem('role', roleTab.value)
+    auth.setAuth(data.token, data.user_id, roleTab.value) // 现在类型正确，无需断言
     await userStore.fetchProfile()
     toast.success('登录成功')
 
-    // 根据角色跳转到不同页面
     if (roleTab.value === 'organizer') {
       router.push('/organizer/activities')
     } else if (roleTab.value === 'admin') {

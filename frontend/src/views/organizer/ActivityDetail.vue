@@ -1,43 +1,20 @@
 <template>
   <div class="flex h-screen">
     <aside class="w-64 bg-white shadow-md flex flex-col z-10">
-      <div class="p-4 border-b">
-        <h1 class="text-xl font-bold text-blue-600">CampusActivity</h1>
-        <p class="text-xs text-gray-500">组织者面板</p>
-      </div>
+      <div class="p-4 border-b"><h1 class="text-xl font-bold text-blue-600">CampusActivity</h1><p class="text-xs text-gray-500">组织者面板</p></div>
       <nav class="flex-1 p-2 space-y-1">
-        <router-link to="/organizer/activities" class="flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition-colors" active-class="bg-blue-50 text-blue-600">
-          <iconify-icon icon="ph:calendar-check" class="mr-2 w-5 h-5"></iconify-icon> 活动管理
-        </router-link>
-        <router-link to="/organizer/notice" class="flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition-colors" active-class="bg-blue-50 text-blue-600">
-          <iconify-icon icon="ph:bell" class="mr-2 w-5 h-5"></iconify-icon> 公告与消息
-        </router-link>
-        <router-link to="/organizer/profile" class="flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition-colors" active-class="bg-blue-50 text-blue-600">
-          <iconify-icon icon="ph:user-circle" class="mr-2 w-5 h-5"></iconify-icon> 个人中心
-        </router-link>
+        <router-link to="/organizer/activities" class="flex items-center px-3 py-2 rounded-md hover:bg-gray-100" active-class="bg-blue-50 text-blue-600"><iconify-icon icon="ph:calendar-check" class="mr-2 w-5 h-5"></iconify-icon> 活动管理</router-link>
+        <router-link to="/organizer/notice" class="flex items-center px-3 py-2 rounded-md hover:bg-gray-100" active-class="bg-blue-50 text-blue-600"><iconify-icon icon="ph:bell" class="mr-2 w-5 h-5"></iconify-icon> 公告与消息</router-link>
+        <router-link to="/organizer/profile" class="flex items-center px-3 py-2 rounded-md hover:bg-gray-100" active-class="bg-blue-50 text-blue-600"><iconify-icon icon="ph:user-circle" class="mr-2 w-5 h-5"></iconify-icon> 个人中心</router-link>
       </nav>
-      <div class="p-4 border-t text-sm text-gray-500">
-        <p class="truncate">XX社团</p>
-        <button @click="logout" class="text-red-500 hover:text-red-700 mt-2 text-left">退出登录</button>
-      </div>
+      <div class="p-4 border-t text-sm text-gray-500"><p class="truncate">{{ userStore.userInfo?.org_name || '组织者' }}</p><button @click="logout" class="text-red-500 hover:text-red-700 mt-2 text-left">退出登录</button></div>
     </aside>
 
     <main class="flex-1 overflow-y-auto bg-gradient-to-br from-blue-50 to-blue-100 p-6">
       <AppPageContainer variant="gradient" padding="lg" max-width="2xl">
-        <div class="mb-4">
-          <AppButton variant="link" @click="goBack" class="text-white">
-            <iconify-icon icon="ph:arrow-left-bold"></iconify-icon> 返回
-          </AppButton>
-        </div>
-
+        <div class="mb-4"><AppButton variant="link" @click="goBack" class="text-white"><iconify-icon icon="ph:arrow-left-bold"></iconify-icon> 返回</AppButton></div>
         <AppCard>
-          <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-bold">{{ isEdit ? '编辑活动' : '创建活动' }}</h2>
-            <span class="px-3 py-1 rounded-full text-sm" :class="statusColorClass(activityData.status)">
-              {{ statusText(activityData.status) }}
-            </span>
-          </div>
-
+          <div class="flex justify-between items-center mb-6"><h2 class="text-2xl font-bold">{{ isEdit ? '编辑活动' : '创建活动' }}</h2><span class="px-3 py-1 rounded-full text-sm" :class="statusColorClass(activityData.status)">{{ statusText(activityData.status) }}</span></div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div><label class="block text-sm font-medium text-gray-700">活动名称</label><input type="text" v-model="formData.name" class="w-full border rounded px-3 py-2"></div>
             <div><label class="block text-sm font-medium text-gray-700">分类</label><select v-model="formData.category_id" class="w-full border rounded px-3 py-2"><option v-for="cat in categoryOptions" :key="cat.value" :value="cat.value">{{ cat.label }}</option></select></div>
@@ -50,7 +27,6 @@
             <div><label class="block text-sm font-medium text-gray-700">取消报名截止时间</label><input type="datetime-local" v-model="formData.cancel_deadline" class="w-full border rounded px-3 py-2"></div>
             <div class="col-span-2"><label class="block text-sm font-medium text-gray-700">活动简介</label><textarea v-model="formData.description" rows="3" class="w-full border rounded px-3 py-2"></textarea></div>
           </div>
-
           <div class="flex flex-wrap gap-3 pt-4 mt-4 border-t">
             <AppButton variant="blue" @click="handleSave" :disabled="!canSave">保存修改</AppButton>
             <AppButton variant="blue" @click="handleApplyReview" :disabled="!canApplyReview">申请审核</AppButton>
@@ -61,10 +37,7 @@
             <AppButton variant="destructive" @click="handleDelete" :disabled="!canDelete">删除活动</AppButton>
           </div>
         </AppCard>
-
-        <AppDialog v-model:open="qrDialogVisible" title="签到码" confirm-text="关闭" @confirm="qrDialogVisible = false">
-          <div class="text-center py-4"><p class="text-2xl font-mono tracking-wider">{{ qrCode }}</p><p class="text-sm text-gray-500 mt-2">有效期至活动结束</p></div>
-        </AppDialog>
+        <AppDialog v-model:open="qrDialogVisible" title="签到码" confirm-text="关闭" @confirm="qrDialogVisible = false"><div class="text-center py-4"><p class="text-2xl font-mono tracking-wider">{{ qrCode }}</p><p class="text-sm text-gray-500 mt-2">有效期至活动结束</p></div></AppDialog>
       </AppPageContainer>
     </main>
   </div>
@@ -78,15 +51,18 @@ import AppCard from '@/components/common/AppCard.vue'
 import AppButton from '@/components/common/AppButton.vue'
 import AppDialog from '@/components/layout/AppDialog.vue'
 import { createActivity, updateActivity, deleteActivity, submitActivity, getActivityDetail, getCategories, getCheckinCode } from '@/api/organizer'
+import { useUserStore } from '@/stores/user'
+import { showApiError } from '@/api/request'
 
 const router = useRouter()
 const route = useRoute()
+const userStore = useUserStore()
 const activityId = route.query.id ? Number(route.query.id) : null
 const isEdit = !!activityId
 
 const formData = reactive({
   name: '',
-  category_id: null as number | null,
+  category_id: undefined as number | undefined,
   start_time: '',
   end_time: '',
   campus: '',
@@ -103,11 +79,9 @@ const activityData = reactive({
 })
 const categoryOptions = ref<{ value: number; label: string }[]>([])
 
-const isPublished = computed(() => ['open', 'edit_pending', 'ongoing'].includes(activityData.status))
-const isWithinOneHourBeforeStart = computed(() => false)
-const canSave = computed(() => !isWithinOneHourBeforeStart.value)
+const canSave = computed(() => true)
 const canApplyReview = computed(() => activityData.status === 'draft' || activityData.status === 'rejected')
-const canDelete = computed(() => !isWithinOneHourBeforeStart.value && !['ended', 'removed'].includes(activityData.status))
+const canDelete = computed(() => !['ended', 'removed'].includes(activityData.status))
 
 const statusText = (s: string) => {
   const map: Record<string, string> = {
@@ -127,88 +101,59 @@ const statusColorClass = (s: string) => {
   return map[s] || 'bg-gray-100'
 }
 
-// 模拟数据
-const mockCategoryOptions = [
-  { value: 1, label: '学术类' },
-  { value: 2, label: '文体类' },
-  { value: 3, label: '志愿服务类' }
-]
-const mockActivityDetail = {
-  id: 1,
-  name: '校园歌手大赛',
-  category_id: 2,
-  start_time: '2026-06-10T18:00',
-  end_time: '2026-06-10T21:00',
-  campus: '校本部',
-  location: '报告厅',
-  max_participants: 100,
-  registration_deadline: '2026-06-05T23:59',
-  cancel_deadline: '2026-06-09T23:59',
-  description: '全校歌唱比赛',
-  status: 'pending',
-  current_participants: 0
-}
-
 const fetchCategories = async () => {
   try {
-    const res = await getCategories()
-    if (res.code === 200 && res.data) {
-      const flat: any[] = []
-      res.data.forEach((cat: any) => {
-        if (cat.children) {
-          cat.children.forEach((child: any) => flat.push({ value: child.id, label: child.name }))
-        } else {
-          flat.push({ value: cat.id, label: cat.name })
-        }
-      })
-      categoryOptions.value = flat
-    } else throw new Error()
-  } catch {
-    categoryOptions.value = mockCategoryOptions
+    const data = await getCategories()
+    const flat: any[] = []
+    data.forEach((cat: any) => {
+      if (cat.children) {
+        cat.children.forEach((child: any) => flat.push({ value: child.id, label: child.name }))
+      } else {
+        flat.push({ value: cat.id, label: cat.name })
+      }
+    })
+    categoryOptions.value = flat
+  } catch (e) {
+    showApiError(e, '获取分类失败')
   }
 }
 
 const fetchActivityDetail = async () => {
   if (!isEdit) return
   try {
-    const res = await getActivityDetail(activityId!)
-    if (res.code === 200) {
-      const d = res.data
-      activityData.id = d.activity_id
-      activityData.status = d.status
-      activityData.current_participants = d.current_participants
-      formData.name = d.name
-      formData.category_id = d.category_id
-      formData.start_time = d.start_time.replace(' ', 'T')
-      formData.end_time = d.end_time.replace(' ', 'T')
-      formData.campus = d.campus
-      formData.location = d.location
-      formData.max_participants = d.max_participants
-      formData.registration_deadline = d.registration_deadline.replace(' ', 'T')
-      formData.cancel_deadline = d.cancel_deadline.replace(' ', 'T')
-      formData.description = d.description
-    } else throw new Error()
-  } catch {
-    // 降级模拟数据
-    Object.assign(activityData, { id: activityId, status: mockActivityDetail.status, current_participants: mockActivityDetail.current_participants })
-    Object.assign(formData, { ...mockActivityDetail, category_id: mockActivityDetail.category_id })
+    const data = await getActivityDetail(activityId!)
+    activityData.id = data.activity_id
+    activityData.status = data.status
+    activityData.current_participants = data.current_participants
+    formData.name = data.name
+    formData.category_id = data.category_id
+    formData.start_time = data.start_time.replace(' ', 'T')
+    formData.end_time = data.end_time.replace(' ', 'T')
+    formData.campus = data.campus
+    formData.location = data.location
+    formData.max_participants = data.max_participants
+    formData.registration_deadline = data.registration_deadline.replace(' ', 'T')
+    formData.cancel_deadline = data.cancel_deadline.replace(' ', 'T')
+    formData.description = data.description
+  } catch (e) {
+    showApiError(e, '获取活动详情失败')
   }
 }
 
 const handleSave = async () => {
   if (!formData.name) { alert('请填写活动名称'); return }
-  const payload = { ...formData, save_as_draft: true }
+  if (!formData.category_id) { alert('请选择分类'); return }
+  const payload = { ...formData, category_id: formData.category_id, save_as_draft: true }
   try {
     if (isEdit) {
       await updateActivity(activityId!, payload)
       alert('保存成功')
     } else {
-      const res = await createActivity(payload)
-      if (res.code === 200) router.push(`/organizer/activity?id=${res.data.activity_id}`)
+      const data = await createActivity(payload)
+      router.push(`/organizer/activity?id=${data.activity_id}`)
     }
-  } catch {
-    alert(isEdit ? '保存失败（模拟）' : '创建失败（模拟）')
-    if (!isEdit) router.push(`/organizer/activity?id=${Date.now()}`)
+  } catch (e) {
+    showApiError(e, isEdit ? '保存失败' : '创建失败')
   }
 }
 const handleApplyReview = async () => {
@@ -216,8 +161,8 @@ const handleApplyReview = async () => {
   try {
     await submitActivity(activityId!)
     alert('已提交审核')
-  } catch {
-    alert('提交审核失败（模拟）')
+  } catch (e) {
+    showApiError(e, '提交审核失败')
   }
 }
 const handleDelete = async () => {
@@ -226,8 +171,8 @@ const handleDelete = async () => {
     await deleteActivity(activityId!)
     alert('删除成功')
     router.push('/organizer/activities')
-  } catch {
-    alert('删除失败（模拟）')
+  } catch (e) {
+    showApiError(e, '删除失败')
   }
 }
 const goToRegistrations = () => router.push(`/organizer/registrations?activityId=${activityId}`)
@@ -238,15 +183,17 @@ const qrCode = ref('')
 const generateQRCode = async () => {
   if (!activityId) return
   try {
-    const res = await getCheckinCode(activityId)
-    if (res.code === 200) qrCode.value = res.data.checkin_code
-  } catch {
-    qrCode.value = Math.random().toString(36).substring(2, 8).toUpperCase()
+    const data = await getCheckinCode(activityId)
+    qrCode.value = data.checkin_code
+    qrDialogVisible.value = true
+  } catch (e) {
+    showApiError(e, '获取签到码失败')
   }
-  qrDialogVisible.value = true
 }
 const goBack = () => router.back()
-const logout = () => { if (confirm('确定退出登录吗？')) router.push('/login') }
+const logout = () => {
+  if (confirm('确定退出登录吗？')) router.push('/login')
+}
 
 onMounted(() => {
   fetchCategories()

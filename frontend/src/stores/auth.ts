@@ -1,30 +1,30 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
-const TOKEN_KEY = 'campus_activity_token'
-const USER_ID_KEY = 'campus_activity_user_id'
-
 export const useAuthStore = defineStore('auth', () => {
-  const token = ref<string | null>(localStorage.getItem(TOKEN_KEY))
-  const userId = ref<number | null>(
-    localStorage.getItem(USER_ID_KEY) ? Number(localStorage.getItem(USER_ID_KEY)) : null,
-  )
+  const token = ref(localStorage.getItem('token') || '')
+  const userId = ref<number | null>(null)
+  const role = ref<'user' | 'organizer' | 'admin' | null>(localStorage.getItem('role') as any || null)
+
+  const setAuth = (newToken: string, newUserId: number, newRole: 'user' | 'organizer' | 'admin') => {
+    token.value = newToken
+    userId.value = newUserId
+    role.value = newRole
+    localStorage.setItem('token', newToken)
+    localStorage.setItem('user_id', String(newUserId))
+    localStorage.setItem('role', newRole)
+  }
+
+  const clearAuth = () => {
+    token.value = ''
+    userId.value = null
+    role.value = null
+    localStorage.removeItem('token')
+    localStorage.removeItem('user_id')
+    localStorage.removeItem('role')
+  }
 
   const isLoggedIn = computed(() => !!token.value)
 
-  function setAuth(newToken: string, newUserId: number) {
-    token.value = newToken
-    userId.value = newUserId
-    localStorage.setItem(TOKEN_KEY, newToken)
-    localStorage.setItem(USER_ID_KEY, String(newUserId))
-  }
-
-  function clearAuth() {
-    token.value = null
-    userId.value = null
-    localStorage.removeItem(TOKEN_KEY)
-    localStorage.removeItem(USER_ID_KEY)
-  }
-
-  return { token, userId, isLoggedIn, setAuth, clearAuth }
+  return { token, userId, role, setAuth, clearAuth, isLoggedIn }
 })
