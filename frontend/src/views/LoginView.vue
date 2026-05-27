@@ -22,7 +22,7 @@ const roleTabs = [
   { value: 'user', label: '普通用户' },
   { value: 'organizer', label: '组织者' },
   { value: 'admin', label: '管理员' },
-]
+] as const
 
 // 根据角色动态调整表单字段的标签和提示
 const loginFields = ref<FormField[]>([

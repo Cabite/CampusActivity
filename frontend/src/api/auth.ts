@@ -14,11 +14,17 @@ export interface RegisterPayload {
   phone?: string
 }
 
-export function login(account: string, password: string, role = 'user') {
+export interface LoginPayload {
+  role: 'user' | 'organizer' | 'admin'
+  account: string
+  password: string
+}
+
+export function login(payload: LoginPayload) {
   return apiPost<LoginData>('/auth/login', {
-    role,
-    account,
-    password,
+    role: payload.role,
+    account: payload.account,
+    password: payload.password,
   })
 }
 
