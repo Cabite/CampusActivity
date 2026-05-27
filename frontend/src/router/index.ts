@@ -4,6 +4,7 @@ import { useAuthStore } from '@/stores/auth'
 const router = createRouter({
   history: createWebHistory(),
   routes: [
+    // 公开路由
     {
       path: '/login',
       name: 'login',
@@ -16,6 +17,14 @@ const router = createRouter({
       component: () => import('@/views/RegisterView.vue'),
       meta: { guest: true },
     },
+    // 组织者注册（公开）
+    {
+      path: '/organizer/register',
+      name: 'organizer-register',
+      component: () => import('@/views/organizer/Register.vue'),
+      meta: { guest: true },
+    },
+    // 学生端布局（需要登录）
     {
       path: '/',
       component: () => import('@/layouts/AppLayout.vue'),
@@ -60,18 +69,102 @@ const router = createRouter({
         },
       ],
     },
+    // 组织者独立页面（需要登录，但不使用 AppLayout）
+    {
+      path: '/organizer/activities',
+      name: 'organizer-activities',
+      component: () => import('@/views/organizer/ActivityList.vue'),
+      meta: { requiresAuth: true, role: 'organizer' },
+    },
+    {
+      path: '/organizer/activity',
+      name: 'organizer-activity-form',
+      component: () => import('@/views/organizer/ActivityDetail.vue'),
+      meta: { requiresAuth: true, role: 'organizer' },
+    },
+    {
+      path: '/organizer/registrations',
+      name: 'organizer-registrations',
+      component: () => import('@/views/organizer/RegistrationList.vue'),
+      meta: { requiresAuth: true, role: 'organizer' },
+    },
+    {
+      path: '/organizer/signs',
+      name: 'organizer-signs',
+      component: () => import('@/views/organizer/SignList.vue'),
+      meta: { requiresAuth: true, role: 'organizer' },
+    },
+    {
+      path: '/organizer/stats',
+      name: 'organizer-stats',
+      component: () => import('@/views/organizer/Stats.vue'),
+      meta: { requiresAuth: true, role: 'organizer' },
+    },
+    {
+      path: '/organizer/notice',
+      name: 'organizer-notice',
+      component: () => import('@/views/organizer/NoticeCenter.vue'),
+      meta: { requiresAuth: true, role: 'organizer' },
+    },
+    {
+      path: '/organizer/profile',
+      name: 'organizer-profile',
+      component: () => import('@/views/organizer/Profile.vue'),
+      meta: { requiresAuth: true, role: 'organizer' },
+    },
+    // 管理员独立页面（需要登录）
+    {
+      path: '/admin/audit',
+      name: 'admin-audit',
+      component: () => import('@/views/admin/ActivityAudit.vue'),
+      meta: { requiresAuth: true, role: 'admin' },
+    },
+    {
+      path: '/admin/audit/:id',
+      name: 'admin-audit-detail',
+      component: () => import('@/views/admin/ActivityAuditDetail.vue'),
+      meta: { requiresAuth: true, role: 'admin' },
+    },
+    {
+      path: '/admin/users',
+      name: 'admin-users',
+      component: () => import('@/views/admin/UserManagement.vue'),
+      meta: { requiresAuth: true, role: 'admin' },
+    },
+    {
+      path: '/admin/announcements',
+      name: 'admin-announcements',
+      component: () => import('@/views/admin/Announcement.vue'),
+      meta: { requiresAuth: true, role: 'admin' },
+    },
+    {
+      path: '/admin/statistics',
+      name: 'admin-statistics',
+      component: () => import('@/views/admin/Statistics.vue'),
+      meta: { requiresAuth: true, role: 'admin' },
+    },
+    {
+      path: '/admin/profile',
+      name: 'admin-profile',
+      component: () => import('@/views/admin/Profile.vue'),
+      meta: { requiresAuth: true, role: 'admin' },
+    },
+    // 404 重定向
     { path: '/:pathMatch(.*)*', redirect: '/activities' },
   ],
 })
 
 router.beforeEach((to) => {
   const auth = useAuthStore()
+  // 需要登录但未登录
   if (to.meta.requiresAuth && !auth.isLoggedIn) {
     return { name: 'login', query: { redirect: to.fullPath } }
   }
+  // 已登录用户访问 guest 页面，跳转到默认首页
   if (to.meta.guest && auth.isLoggedIn) {
     return { name: 'activities' }
   }
+  // 角色权限检查（可根据需要实现，暂时只检查是否登录）
   return true
 })
 

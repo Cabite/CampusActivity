@@ -1,5 +1,6 @@
 <template>
   <div class="flex h-screen">
+    <!-- 侧边栏（已移除控制台菜单） -->
     <aside class="w-64 bg-white shadow-md flex flex-col z-10">
       <div class="p-4 border-b">
         <h1 class="text-xl font-bold text-blue-600">CampusActivity</h1>
@@ -36,32 +37,18 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <AppCard class="text-center">
-            <div class="text-3xl font-bold text-blue-600">{{ stats.totalActivities }}</div>
-            <div class="text-gray-500 mt-2">总活动数</div>
-          </AppCard>
-          <AppCard class="text-center">
-            <div class="text-3xl font-bold text-blue-600">{{ stats.totalUsers }}</div>
-            <div class="text-gray-500 mt-2">总用户数</div>
-          </AppCard>
-          <AppCard class="text-center">
-            <div class="text-3xl font-bold text-blue-600">{{ stats.totalRegistrations }}</div>
-            <div class="text-gray-500 mt-2">总报名人次</div>
-          </AppCard>
+          <AppCard class="text-center"><div class="text-3xl font-bold text-blue-600">{{ stats.totalActivities }}</div><div class="text-gray-500 mt-2">总活动数</div></AppCard>
+          <AppCard class="text-center"><div class="text-3xl font-bold text-blue-600">{{ stats.totalUsers }}</div><div class="text-gray-500 mt-2">总用户数</div></AppCard>
+          <AppCard class="text-center"><div class="text-3xl font-bold text-blue-600">{{ stats.totalRegistrations }}</div><div class="text-gray-500 mt-2">总报名人次</div></AppCard>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <!-- 活动类型分布（使用进度条） -->
+          <!-- 活动类型分布 -->
           <AppCard>
             <h2 class="text-xl font-bold mb-4">活动类型分布</h2>
             <div v-for="(value, key) in stats.categoryDistribution" :key="key" class="mb-2">
-              <div class="flex justify-between text-sm">
-                <span>{{ key }}</span>
-                <span>{{ value }}%</span>
-              </div>
-              <div class="w-full bg-gray-200 rounded-full h-2">
-                <div class="bg-blue-600 h-2 rounded-full" :style="{ width: value + '%' }"></div>
-              </div>
+              <div class="flex justify-between text-sm"><span>{{ key }}</span><span>{{ value }}%</span></div>
+              <div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-blue-600 h-2 rounded-full" :style="{ width: value + '%' }"></div></div>
             </div>
           </AppCard>
 
@@ -71,14 +58,8 @@
             <div class="text-6xl font-bold text-blue-600 text-center mb-2">{{ stats.averageCheckinRate }}%</div>
             <div class="text-gray-500 text-center mb-4">整体签到率</div>
             <div class="flex justify-center gap-6">
-              <div class="text-center">
-                <div class="text-2xl font-bold text-green-600">65%</div>
-                <div>二维码签到</div>
-              </div>
-              <div class="text-center">
-                <div class="text-2xl font-bold text-blue-600">13%</div>
-                <div>手动签到</div>
-              </div>
+              <div class="text-center"><div class="text-2xl font-bold text-green-600">65%</div><div>二维码签到</div></div>
+              <div class="text-center"><div class="text-2xl font-bold text-blue-600">13%</div><div>手动签到</div></div>
             </div>
           </AppCard>
         </div>
@@ -97,7 +78,7 @@ import { getPlatformStatistics } from '@/api/admin'
 
 const router = useRouter()
 
-// 模拟数据
+// 模拟数据（使用文档中的字段名 by_status 而不是 by_statuss）
 const mockStats = {
   totalActivities: 124,
   totalUsers: 3456,
@@ -118,17 +99,20 @@ const fetchStatistics = async () => {
   try {
     const res = await getPlatformStatistics()
     if (res.code === 200) {
-      const data = res.data
-      stats.totalActivities = data.activities.total
-      stats.totalUsers = data.user.total
-      stats.totalRegistrations = data.total_participation_count
-      stats.averageCheckinRate = parseFloat(data.average_checkin_rate) || 0
-      stats.categoryDistribution = data.activities.by_categories || {}
-    } else {
-      throw new Error()
-    }
+      stats.totalActivities = res.data.activities.total
+      stats.totalUsers = res.data.user.total
+      stats.totalRegistrations = res.data.total_participation_count
+      stats.averageCheckinRate = parseFloat(res.data.average_checkin_rate) || 0
+      // 使用文档中的 by_categories 字段
+      stats.categoryDistribution = res.data.activities.by_categories || {}
+    } else throw new Error()
   } catch {
-    Object.assign(stats, mockStats)
+    // 降级模拟数据
+    stats.totalActivities = mockStats.totalActivities
+    stats.totalUsers = mockStats.totalUsers
+    stats.totalRegistrations = mockStats.totalRegistrations
+    stats.averageCheckinRate = mockStats.averageCheckinRate
+    stats.categoryDistribution = mockStats.categoryDistribution
   }
 }
 

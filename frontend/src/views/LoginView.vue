@@ -15,7 +15,7 @@ const route = useRoute()
 const auth = useAuthStore()
 const userStore = useUserStore()
 
-const roleTab = ref('user')
+const roleTab = ref<'user' | 'organizer' | 'admin'>('user')
 const isSubmitting = ref(false)
 
 const roleTabs = [
@@ -24,14 +24,15 @@ const roleTabs = [
   { value: 'admin', label: '管理员' },
 ]
 
-const loginFields: FormField[] = [
+// 根据角色动态调整表单字段的标签和提示
+const loginFields = ref<FormField[]>([
   {
     name: 'account',
-    label: '学号',
-    placeholder: '请输入学号',
+    label: '学号 / 邮箱',
+    placeholder: '请输入学号或邮箱',
     required: true,
     leftIcon: User,
-    hint: 'Mock：2024000001 / password123',
+    hint: '普通用户：学号或邮箱',
   },
   {
     name: 'password',
@@ -41,20 +42,47 @@ const loginFields: FormField[] = [
     required: true,
     leftIcon: Lock,
   },
-]
+])
+
+// 监听角色变化，改变字段的提示文本
+const updateFieldHint = () => {
+  if (roleTab.value === 'organizer') {
+    loginFields.value[0].label = '邮箱'
+    loginFields.value[0].placeholder = '请输入组织者邮箱'
+    loginFields.value[0].hint = '组织者使用注册邮箱登录'
+  } else if (roleTab.value === 'admin') {
+    loginFields.value[0].label = '管理员编号'
+    loginFields.value[0].placeholder = '请输入管理员编号'
+    loginFields.value[0].hint = '管理员编号示例：000001'
+  } else {
+    loginFields.value[0].label = '学号 / 邮箱'
+    loginFields.value[0].placeholder = '请输入学号或邮箱'
+    loginFields.value[0].hint = '普通用户：学号或邮箱'
+  }
+}
 
 async function handleLogin(values: Record<string, string>) {
-  if (roleTab.value !== 'user') {
-    toast.info('学生端请使用「普通用户」登录')
-    return
-  }
   isSubmitting.value = true
   try {
-    const data = await login(values.account, values.password)
+    const data = await login({
+      role: roleTab.value,
+      account: values.account,
+      password: values.password,
+    })
     auth.setAuth(data.token, data.user_id)
+    // 根据角色设置 localStorage 的 role 字段
+    localStorage.setItem('role', roleTab.value)
     await userStore.fetchProfile()
     toast.success('登录成功')
-    router.push((route.query.redirect as string) || '/activities')
+
+    // 根据角色跳转到不同页面
+    if (roleTab.value === 'organizer') {
+      router.push('/organizer/activities')
+    } else if (roleTab.value === 'admin') {
+      router.push('/admin/audit')
+    } else {
+      router.push((route.query.redirect as string) || '/activities')
+    }
   } catch (e) {
     showApiError(e, '账号或密码错误')
   } finally {
@@ -82,7 +110,7 @@ async function handleLogin(values: Record<string, string>) {
             :key="tab.value"
             type="button"
             :class="['proto-segment-item flex-1 text-center', roleTab === tab.value && 'active']"
-            @click="roleTab = tab.value"
+            @click="() => { roleTab = tab.value; updateFieldHint() }"
           >
             {{ tab.label }}
           </button>
@@ -98,9 +126,11 @@ async function handleLogin(values: Record<string, string>) {
           @submit="handleLogin"
         />
 
-        <p class="mt-4 text-sm text-muted-foreground">
-          <RouterLink to="/register" class="text-blue-600 hover:underline">注册账号</RouterLink>
-        </p>
+        <div class="mt-4 flex flex-col gap-1 text-sm text-muted-foreground">
+          <RouterLink to="/register" class="text-blue-600 hover:underline">普通用户注册</RouterLink>
+          <RouterLink to="/organizer/register" class="text-blue-600 hover:underline">组织者注册</RouterLink>
+          <span class="text-xs">管理员账号由超级管理员分配，请联系管理员获取</span>
+        </div>
       </AppCard>
     </div>
 

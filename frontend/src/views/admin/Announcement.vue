@@ -1,5 +1,6 @@
 <template>
   <div class="flex h-screen">
+    <!-- 侧边栏（已移除控制台菜单） -->
     <aside class="w-64 bg-white shadow-md flex flex-col z-10">
       <div class="p-4 border-b">
         <h1 class="text-xl font-bold text-blue-600">CampusActivity</h1>
@@ -45,9 +46,8 @@
               <div class="flex justify-between items-start">
                 <div>
                   <h3 class="font-semibold">{{ ann.title }}</h3>
-                  <p class="text-xs text-gray-400">{{ ann.created_at }}</p>
+                  <p class="text-xs text-gray-400">{{ ann.start_time }}</p>
                   <p class="text-sm text-gray-600 mt-1">{{ ann.content }}</p>
-                  <p v-if="ann.start_time" class="text-xs text-gray-400 mt-1">有效时间：{{ ann.start_time }} ~ {{ ann.end_time }}</p>
                 </div>
                 <div class="flex gap-2">
                   <AppButton size="sm" variant="outline" @click="openEditModal(ann)">编辑</AppButton>
@@ -67,8 +67,8 @@
           <div class="space-y-3">
             <input type="text" v-model="form.title" placeholder="标题" class="w-full border rounded px-3 py-2">
             <textarea v-model="form.content" rows="4" placeholder="内容" class="w-full border rounded px-3 py-2"></textarea>
-            <input type="datetime-local" v-model="form.start_time" placeholder="生效时间（可选）" class="w-full border rounded px-3 py-2">
-            <input type="datetime-local" v-model="form.end_time" placeholder="失效时间（可选）" class="w-full border rounded px-3 py-2">
+            <input type="datetime-local" v-model="form.start_time" placeholder="开始时间（可选）" class="w-full border rounded px-3 py-2">
+            <input type="datetime-local" v-model="form.end_time" placeholder="结束时间（可选）" class="w-full border rounded px-3 py-2">
           </div>
         </AppDialog>
       </AppPageContainer>
@@ -92,10 +92,10 @@ const currentPage = ref(1)
 const totalPages = ref(1)
 const pageSize = 10
 
-// 模拟数据
+// 模拟数据（适配文档字段：start_time 代替 created_at）
 const mockAnnouncements = [
-  { id: 1, title: '系统将于本周末进行数据库迁移维护', content: '为了提供更稳定的服务，我们将于周六凌晨2:00至6:00进行停机维护...', created_at: '2026-05-14 09:00', start_time: '', end_time: '' },
-  { id: 2, title: '关于加强校园大型集会安全审核的通知', content: '根据最新安全要求，参与人数超过500人的活动需提交详细的安全预案...', created_at: '2026-05-10 14:30', start_time: '', end_time: '' }
+  { id: 1, title: '系统将于本周末进行数据库迁移维护', content: '为了提供更稳定的服务，我们将于周六凌晨2:00至6:00进行停机维护...', start_time: '2026-05-14 09:00', end_time: '2026-05-30 23:59' },
+  { id: 2, title: '关于加强校园大型集会安全审核的通知', content: '根据最新安全要求，参与人数超过500人的活动需提交详细的安全预案...', start_time: '2026-05-10 14:30', end_time: '2026-06-01 00:00' }
 ]
 
 const fetchAnnouncements = async () => {
@@ -105,12 +105,10 @@ const fetchAnnouncements = async () => {
     if (res.code === 200) {
       announcements.value = res.data
       totalPages.value = Math.ceil(announcements.value.length / pageSize)
-    } else {
-      throw new Error()
-    }
+    } else throw new Error()
   } catch {
     announcements.value = mockAnnouncements
-    totalPages.value = 1
+    totalPages.value = Math.ceil(announcements.value.length / pageSize)
   } finally {
     loading.value = false
   }
@@ -146,8 +144,12 @@ const submitAnnouncement = async () => {
   }
   try {
     if (editingId.value) {
-      // 更新接口暂缺，此处模拟
-      alert('公告已更新')
+      // 编辑接口文档未提供，这里仅模拟更新
+      const idx = announcements.value.findIndex(a => a.id === editingId.value)
+      if (idx !== -1) {
+        announcements.value[idx] = { ...announcements.value[idx], ...form }
+      }
+      alert('公告已更新（模拟）')
     } else {
       await publishAnnouncement(form)
       alert('公告发布成功')
