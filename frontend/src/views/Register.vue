@@ -64,9 +64,11 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { registerOrganizer } from '@/api/auth'
+import { useAuthStore } from '@/stores/auth'
+import { registerOrganizer, type OrganizerRegisterPayload } from '@/api/auth'
 
 const router = useRouter()
+const auth = useAuthStore()
 const loading = ref(false)
 const fileInput = ref<HTMLInputElement>()
 
@@ -91,7 +93,6 @@ const handleFileChange = (e: Event) => {
       alert('只支持 jpg/png 格式')
       return
     }
-    // 实际应上传到服务器，这里仅保存文件名（可扩展）
     form.value.org_proof_image = file.name
   }
 }
@@ -101,13 +102,33 @@ const triggerFileInput = () => {
 }
 
 const handleRegister = async () => {
+  // 表单验证
+  if (!form.value.email) {
+    alert('请输入邮箱')
+    return
+  }
+  if (!form.value.org_name) {
+    alert('请输入组织名称')
+    return
+  }
+  if (!form.value.password) {
+    alert('请输入密码')
+    return
+  }
   if (form.value.password !== form.value.confirm_password) {
     alert('两次输入的密码不一致')
     return
   }
+  if (form.value.password.length < 6) {
+    alert('密码长度不能小于6位')
+    return
+  }
+
   loading.value = true
   try {
-    const res = await registerOrganizer({
+    // 调用组织者注册接口
+    // apiPost 返回的是 data 字段的内容，即 { userId, token }
+    const data = await registerOrganizer({
       email: form.value.email,
       org_name: form.value.org_name,
       password: form.value.password,
@@ -115,18 +136,22 @@ const handleRegister = async () => {
       org_proof_text: form.value.org_proof_text,
       org_proof_image: form.value.org_proof_image || undefined
     })
-    if (res.code === 200) {
-      const { token, user_id } = res.data
-      localStorage.setItem('token', token)
-      localStorage.setItem('user_id', String(user_id))
+    
+    // 根据接口文档，data 包含 userId 和 token
+    if (data.token && data.userId) {
+      // 保存认证信息
+      auth.setAuth(data.token, data.userId)
       localStorage.setItem('role', 'organizer')
-      alert('注册成功，请等待管理员审核')
+      alert('注册成功！请等待管理员审核')
       router.push('/organizer/activities')
     } else {
-      alert(res.message || '注册失败')
+      alert('注册成功，但自动登录失败，请手动登录')
+      router.push('/login')
     }
   } catch (err: any) {
-    alert(err.message || '网络错误，请稍后重试')
+    console.error('注册失败:', err)
+    const message = err.message || '注册失败，请稍后重试'
+    alert(message)
   } finally {
     loading.value = false
   }

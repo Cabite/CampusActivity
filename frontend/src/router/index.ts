@@ -21,7 +21,7 @@ const router = createRouter({
     {
       path: '/organizer/register',
       name: 'organizer-register',
-      component: () => import('@/views/organizer/Register.vue'),
+      component: () => import('@/views/Register.vue'),
       meta: { guest: true },
     },
     // 学生端布局（需要登录）
