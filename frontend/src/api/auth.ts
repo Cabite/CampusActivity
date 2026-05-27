@@ -14,6 +14,15 @@ export interface RegisterPayload {
   phone?: string
 }
 
+export interface OrganizerRegisterPayload {
+  email: string
+  org_name: string
+  password: string
+  confirm_password: string
+  org_proof_text: string
+  org_proof_image?: string
+}
+
 export interface LoginPayload {
   role: 'user' | 'organizer' | 'admin'
   account: string
@@ -30,6 +39,10 @@ export function login(payload: LoginPayload) {
 
 export function register(payload: RegisterPayload) {
   return apiPost<RegisterData>('/auth/register/user', payload)
+}
+
+export function registerOrganizer(payload: OrganizerRegisterPayload) {
+  return apiPost<RegisterData>('/auth/register/organizer', payload)
 }
 
 export function logout() {
