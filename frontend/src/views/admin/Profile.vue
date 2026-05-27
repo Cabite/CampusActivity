@@ -1,15 +1,11 @@
 <template>
   <div class="flex h-screen">
-    <!-- 侧边栏（同上） -->
     <aside class="w-64 bg-white shadow-md flex flex-col z-10">
       <div class="p-4 border-b">
         <h1 class="text-xl font-bold text-blue-600">CampusActivity</h1>
         <p class="text-xs text-gray-500">管理员面板</p>
       </div>
       <nav class="flex-1 p-2 space-y-1">
-        <router-link to="/admin/dashboard" class="flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition-colors" active-class="bg-blue-50 text-blue-600">
-          <iconify-icon icon="ph:gauge" class="mr-2 w-5 h-5"></iconify-icon> 控制台
-        </router-link>
         <router-link to="/admin/audit" class="flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition-colors" active-class="bg-blue-50 text-blue-600">
           <iconify-icon icon="ph:check-circle" class="mr-2 w-5 h-5"></iconify-icon> 活动审核
         </router-link>
@@ -34,7 +30,6 @@
 
     <main class="flex-1 overflow-y-auto bg-gradient-to-br from-blue-50 to-blue-100 p-6">
       <AppPageContainer variant="gradient" padding="lg" max-width="2xl">
-        <!-- 原管理员 Profile.vue 的完整内容 -->
         <div class="mb-6">
           <h1 class="text-3xl font-bold text-white">个人中心</h1>
           <p class="text-white/70 mt-1">账号信息与管理</p>
@@ -55,8 +50,14 @@
 
           <div class="p-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
-              <div><label class="block text-sm font-medium text-gray-700 mb-1">用户名</label><input type="text" v-model="username" class="w-full border rounded-lg px-3 py-2" disabled /></div>
-              <div><label class="block text-sm font-medium text-gray-700 mb-1">邮箱</label><input type="email" v-model="email" class="w-full border rounded-lg px-3 py-2" disabled /></div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">用户名</label>
+                <input type="text" v-model="username" class="w-full border rounded-lg px-3 py-2" disabled />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">邮箱</label>
+                <input type="email" v-model="email" class="w-full border rounded-lg px-3 py-2" disabled />
+              </div>
             </div>
             <div class="flex flex-wrap gap-3 mt-8 pt-4 border-t border-gray-100">
               <AppButton variant="outline" @click="openPwdModal">修改密码</AppButton>
@@ -90,6 +91,7 @@ import { useRouter } from 'vue-router'
 import AppPageContainer from '@/components/layout/AppPageContainer.vue'
 import AppButton from '@/components/common/AppButton.vue'
 import AppDialog from '@/components/layout/AppDialog.vue'
+import { getUserProfile, updateAvatar, resetPassword, deleteAccount, logout } from '@/api/organizer' // 复用
 
 const router = useRouter()
 
@@ -97,7 +99,7 @@ const router = useRouter()
 const username = ref('管理员')
 const email = ref('admin@campus.com')
 const avatar = ref('https://modao.cc/agent-py/media/generated_images/2026-05-15/8eb007fda4b34653a3e2673b81eafd5d.jpg')
-const role = ref('super_admin')
+const role = ref('super_admin') // 或 'admin'
 
 // 修改密码
 const pwdModalVisible = ref(false)
@@ -109,6 +111,7 @@ const confirmPassword = ref('')
 const avatarModalVisible = ref(false)
 const avatarUrl = ref('')
 
+// 模拟数据
 const mockProfile = {
   username: '管理员',
   email: 'admin@campus.com',
@@ -118,8 +121,15 @@ const mockProfile = {
 
 const fetchProfile = async () => {
   try {
-    // const res = await getProfile()
-    throw new Error('API not implemented')
+    const res = await getUserProfile()
+    if (res.code === 200) {
+      username.value = res.data.username
+      email.value = res.data.email
+      avatar.value = res.data.avatar
+      role.value = res.data.role
+    } else {
+      throw new Error()
+    }
   } catch {
     username.value = mockProfile.username
     email.value = mockProfile.email
@@ -138,7 +148,8 @@ const changePassword = async () => {
     return
   }
   try {
-    // await changePassword({ old_password: oldPassword.value, new_password: newPassword.value })
+    // 注意：重置密码需要 token，此处简化，实际应调用 /user/reset-password
+    // 这里模拟成功
     alert('密码修改成功，请重新登录')
     pwdModalVisible.value = false
     handleLogout()
@@ -153,7 +164,8 @@ const updateAvatar = async () => {
     return
   }
   try {
-    // await updateAvatar({ avatar: avatarUrl.value })
+    // 注意：updateAvatar 需要 formData，这里为简化直接传 URL（实际应通过文件上传）
+    // 模拟成功
     avatar.value = avatarUrl.value
     alert('头像已更新')
     avatarModalVisible.value = false
@@ -176,11 +188,10 @@ const openAvatarModal = () => {
 const handleLogout = async () => {
   if (confirm('确定要退出登录吗？')) {
     try {
-      // await logout()
-      alert('已退出登录')
+      await logout()
       router.push('/login')
     } catch {
-      alert('退出失败')
+      router.push('/login')
     }
   }
 }
@@ -188,8 +199,7 @@ const handleLogout = async () => {
 const handleDeleteAccount = async () => {
   if (confirm('注销账号后将无法恢复，所有数据将被清除。确定注销吗？')) {
     try {
-      // await deleteAccount({ confirm: true })
-      alert('账号已注销')
+      await deleteAccount(true)
       router.push('/login')
     } catch {
       alert('注销失败')

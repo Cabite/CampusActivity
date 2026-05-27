@@ -1,15 +1,11 @@
 <template>
   <div class="flex h-screen">
-    <!-- 侧边栏（同上） -->
     <aside class="w-64 bg-white shadow-md flex flex-col z-10">
       <div class="p-4 border-b">
         <h1 class="text-xl font-bold text-blue-600">CampusActivity</h1>
         <p class="text-xs text-gray-500">管理员面板</p>
       </div>
       <nav class="flex-1 p-2 space-y-1">
-        <router-link to="/admin/dashboard" class="flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition-colors" active-class="bg-blue-50 text-blue-600">
-          <iconify-icon icon="ph:gauge" class="mr-2 w-5 h-5"></iconify-icon> 控制台
-        </router-link>
         <router-link to="/admin/audit" class="flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition-colors" active-class="bg-blue-50 text-blue-600">
           <iconify-icon icon="ph:check-circle" class="mr-2 w-5 h-5"></iconify-icon> 活动审核
         </router-link>
@@ -34,25 +30,38 @@
 
     <main class="flex-1 overflow-y-auto bg-gradient-to-br from-blue-50 to-blue-100 p-6">
       <AppPageContainer variant="gradient" padding="lg" max-width="2xl">
-        <!-- 原 Statistics.vue 的完整内容 -->
         <div class="mb-6">
           <h1 class="text-3xl font-bold text-white">平台统计</h1>
           <p class="text-white/70 mt-1">平台数据总览</p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <AppCard class="text-center"><div class="text-3xl font-bold text-blue-600">{{ stats.totalActivities }}</div><div class="text-gray-500 mt-2">总活动数</div></AppCard>
-          <AppCard class="text-center"><div class="text-3xl font-bold text-blue-600">{{ stats.totalUsers }}</div><div class="text-gray-500 mt-2">总用户数</div></AppCard>
-          <AppCard class="text-center"><div class="text-3xl font-bold text-blue-600">{{ stats.totalRegistrations }}</div><div class="text-gray-500 mt-2">总报名人次</div></AppCard>
+          <AppCard class="text-center">
+            <div class="text-3xl font-bold text-blue-600">{{ stats.totalActivities }}</div>
+            <div class="text-gray-500 mt-2">总活动数</div>
+          </AppCard>
+          <AppCard class="text-center">
+            <div class="text-3xl font-bold text-blue-600">{{ stats.totalUsers }}</div>
+            <div class="text-gray-500 mt-2">总用户数</div>
+          </AppCard>
+          <AppCard class="text-center">
+            <div class="text-3xl font-bold text-blue-600">{{ stats.totalRegistrations }}</div>
+            <div class="text-gray-500 mt-2">总报名人次</div>
+          </AppCard>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <!-- 活动类型分布 -->
+          <!-- 活动类型分布（使用进度条） -->
           <AppCard>
             <h2 class="text-xl font-bold mb-4">活动类型分布</h2>
             <div v-for="(value, key) in stats.categoryDistribution" :key="key" class="mb-2">
-              <div class="flex justify-between text-sm"><span>{{ key }}</span><span>{{ value }}%</span></div>
-              <div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-blue-600 h-2 rounded-full" :style="{ width: value + '%' }"></div></div>
+              <div class="flex justify-between text-sm">
+                <span>{{ key }}</span>
+                <span>{{ value }}%</span>
+              </div>
+              <div class="w-full bg-gray-200 rounded-full h-2">
+                <div class="bg-blue-600 h-2 rounded-full" :style="{ width: value + '%' }"></div>
+              </div>
             </div>
           </AppCard>
 
@@ -62,8 +71,14 @@
             <div class="text-6xl font-bold text-blue-600 text-center mb-2">{{ stats.averageCheckinRate }}%</div>
             <div class="text-gray-500 text-center mb-4">整体签到率</div>
             <div class="flex justify-center gap-6">
-              <div class="text-center"><div class="text-2xl font-bold text-green-600">65%</div><div>二维码签到</div></div>
-              <div class="text-center"><div class="text-2xl font-bold text-blue-600">13%</div><div>手动签到</div></div>
+              <div class="text-center">
+                <div class="text-2xl font-bold text-green-600">65%</div>
+                <div>二维码签到</div>
+              </div>
+              <div class="text-center">
+                <div class="text-2xl font-bold text-blue-600">13%</div>
+                <div>手动签到</div>
+              </div>
             </div>
           </AppCard>
         </div>
@@ -78,9 +93,11 @@ import { useRouter } from 'vue-router'
 import AppPageContainer from '@/components/layout/AppPageContainer.vue'
 import AppCard from '@/components/common/AppCard.vue'
 import AppButton from '@/components/common/AppButton.vue'
+import { getPlatformStatistics } from '@/api/admin'
 
 const router = useRouter()
 
+// 模拟数据
 const mockStats = {
   totalActivities: 124,
   totalUsers: 3456,
@@ -99,14 +116,19 @@ const stats = reactive({
 
 const fetchStatistics = async () => {
   try {
-    // const res = await getAdminStatistics()
-    throw new Error('API not implemented')
+    const res = await getPlatformStatistics()
+    if (res.code === 200) {
+      const data = res.data
+      stats.totalActivities = data.activities.total
+      stats.totalUsers = data.user.total
+      stats.totalRegistrations = data.total_participation_count
+      stats.averageCheckinRate = parseFloat(data.average_checkin_rate) || 0
+      stats.categoryDistribution = data.activities.by_categories || {}
+    } else {
+      throw new Error()
+    }
   } catch {
-    stats.totalActivities = mockStats.totalActivities
-    stats.totalUsers = mockStats.totalUsers
-    stats.totalRegistrations = mockStats.totalRegistrations
-    stats.averageCheckinRate = mockStats.averageCheckinRate
-    stats.categoryDistribution = mockStats.categoryDistribution
+    Object.assign(stats, mockStats)
   }
 }
 

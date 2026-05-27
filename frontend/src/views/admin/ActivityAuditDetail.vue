@@ -1,15 +1,11 @@
 <template>
   <div class="flex h-screen">
-    <!-- 侧边栏（同上） -->
     <aside class="w-64 bg-white shadow-md flex flex-col z-10">
       <div class="p-4 border-b">
         <h1 class="text-xl font-bold text-blue-600">CampusActivity</h1>
         <p class="text-xs text-gray-500">管理员面板</p>
       </div>
       <nav class="flex-1 p-2 space-y-1">
-        <router-link to="/admin/dashboard" class="flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition-colors" active-class="bg-blue-50 text-blue-600">
-          <iconify-icon icon="ph:gauge" class="mr-2 w-5 h-5"></iconify-icon> 控制台
-        </router-link>
         <router-link to="/admin/audit" class="flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition-colors" active-class="bg-blue-50 text-blue-600">
           <iconify-icon icon="ph:check-circle" class="mr-2 w-5 h-5"></iconify-icon> 活动审核
         </router-link>
@@ -34,7 +30,6 @@
 
     <main class="flex-1 overflow-y-auto bg-gradient-to-br from-blue-50 to-blue-100 p-6">
       <AppPageContainer variant="gradient" padding="lg" max-width="2xl">
-        <!-- 以下为原 ActivityAuditDetail.vue 的完整内容 -->
         <div class="mb-4">
           <AppButton variant="link" @click="goBack" class="text-white">
             <iconify-icon icon="ph:arrow-left-bold"></iconify-icon> 返回
@@ -97,6 +92,7 @@ import AppPageContainer from '@/components/layout/AppPageContainer.vue'
 import AppCard from '@/components/common/AppCard.vue'
 import AppButton from '@/components/common/AppButton.vue'
 import AppDialog from '@/components/layout/AppDialog.vue'
+import { getActivityDetail, reviewActivity, removeActivity } from '@/api/admin'
 
 const router = useRouter()
 const route = useRoute()
@@ -166,8 +162,29 @@ const statusColorClass = (status: string) => {
 const fetchActivityDetail = async () => {
   loading.value = true
   try {
-    // const res = await getActivityDetail(activityId)
-    throw new Error('API not implemented')
+    const res = await getActivityDetail(activityId)
+    if (res.code === 200) {
+      const d = res.data
+      Object.assign(activity, {
+        id: d.activity_id,
+        name: d.name,
+        category_name: d.category_name,
+        organizer_name: d.organizer_name,
+        start_time: d.start_time,
+        end_time: d.end_time,
+        campus: d.campus,
+        location: d.location,
+        max_participants: d.max_participants,
+        current_participants: d.current_participants,
+        registration_deadline: d.registration_deadline,
+        cancel_deadline: d.cancel_deadline,
+        description: d.description,
+        status: d.status,
+        checked_in_count: d.checked_in_count || 0
+      })
+    } else {
+      throw new Error()
+    }
   } catch {
     Object.assign(activity, mockActivityDetail, { id: activityId })
   } finally {
@@ -175,10 +192,11 @@ const fetchActivityDetail = async () => {
   }
 }
 
+// 通过
 const approve = async () => {
   if (!confirm('确定通过该活动吗？')) return
   try {
-    // await reviewActivity(activityId, { action: 'approve' })
+    await reviewActivity(activityId, 'approve')
     alert('审核通过')
     router.push('/admin/audit')
   } catch {
@@ -186,6 +204,7 @@ const approve = async () => {
   }
 }
 
+// 拒绝
 const rejectModalVisible = ref(false)
 const rejectReason = ref('')
 const openRejectModal = () => {
@@ -198,7 +217,7 @@ const confirmReject = async () => {
     return
   }
   try {
-    // await reviewActivity(activityId, { action: 'reject', reject_reason: rejectReason.value })
+    await reviewActivity(activityId, 'reject', rejectReason.value)
     alert('已拒绝')
     router.push('/admin/audit')
   } catch {
@@ -206,6 +225,7 @@ const confirmReject = async () => {
   }
 }
 
+// 下架
 const removeModalVisible = ref(false)
 const removeReason = ref('')
 const openRemoveModal = () => {
@@ -218,7 +238,7 @@ const confirmRemove = async () => {
     return
   }
   try {
-    // await removeActivity(activityId, { reason: removeReason.value })
+    await removeActivity(activityId, removeReason.value)
     alert('活动已下架')
     router.push('/admin/audit')
   } catch {

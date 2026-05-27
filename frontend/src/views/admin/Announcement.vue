@@ -1,15 +1,11 @@
 <template>
   <div class="flex h-screen">
-    <!-- 侧边栏（同上） -->
     <aside class="w-64 bg-white shadow-md flex flex-col z-10">
       <div class="p-4 border-b">
         <h1 class="text-xl font-bold text-blue-600">CampusActivity</h1>
         <p class="text-xs text-gray-500">管理员面板</p>
       </div>
       <nav class="flex-1 p-2 space-y-1">
-        <router-link to="/admin/dashboard" class="flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition-colors" active-class="bg-blue-50 text-blue-600">
-          <iconify-icon icon="ph:gauge" class="mr-2 w-5 h-5"></iconify-icon> 控制台
-        </router-link>
         <router-link to="/admin/audit" class="flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition-colors" active-class="bg-blue-50 text-blue-600">
           <iconify-icon icon="ph:check-circle" class="mr-2 w-5 h-5"></iconify-icon> 活动审核
         </router-link>
@@ -34,7 +30,6 @@
 
     <main class="flex-1 overflow-y-auto bg-gradient-to-br from-blue-50 to-blue-100 p-6">
       <AppPageContainer variant="gradient" padding="lg" max-width="2xl">
-        <!-- 原 Announcement.vue 的完整内容 -->
         <div class="mb-6">
           <h1 class="text-3xl font-bold text-white">系统公告管理</h1>
           <p class="text-white/70 mt-1">发布与管理系统公告</p>
@@ -52,6 +47,7 @@
                   <h3 class="font-semibold">{{ ann.title }}</h3>
                   <p class="text-xs text-gray-400">{{ ann.created_at }}</p>
                   <p class="text-sm text-gray-600 mt-1">{{ ann.content }}</p>
+                  <p v-if="ann.start_time" class="text-xs text-gray-400 mt-1">有效时间：{{ ann.start_time }} ~ {{ ann.end_time }}</p>
                 </div>
                 <div class="flex gap-2">
                   <AppButton size="sm" variant="outline" @click="openEditModal(ann)">编辑</AppButton>
@@ -71,7 +67,8 @@
           <div class="space-y-3">
             <input type="text" v-model="form.title" placeholder="标题" class="w-full border rounded px-3 py-2">
             <textarea v-model="form.content" rows="4" placeholder="内容" class="w-full border rounded px-3 py-2"></textarea>
-            <input type="datetime-local" v-model="form.expires_at" placeholder="过期时间（可选）" class="w-full border rounded px-3 py-2">
+            <input type="datetime-local" v-model="form.start_time" placeholder="生效时间（可选）" class="w-full border rounded px-3 py-2">
+            <input type="datetime-local" v-model="form.end_time" placeholder="失效时间（可选）" class="w-full border rounded px-3 py-2">
           </div>
         </AppDialog>
       </AppPageContainer>
@@ -86,6 +83,7 @@ import AppPageContainer from '@/components/layout/AppPageContainer.vue'
 import AppCard from '@/components/common/AppCard.vue'
 import AppButton from '@/components/common/AppButton.vue'
 import AppDialog from '@/components/layout/AppDialog.vue'
+import { publishAnnouncement, deleteAnnouncement, getAnnouncements } from '@/api/admin'
 
 const router = useRouter()
 const loading = ref(false)
@@ -96,14 +94,20 @@ const pageSize = 10
 
 // 模拟数据
 const mockAnnouncements = [
-  { id: 1, title: '系统将于本周末进行数据库迁移维护', content: '为了提供更稳定的服务，我们将于周六凌晨2:00至6:00进行停机维护...', created_at: '2026-05-14 09:00', expires_at: null },
-  { id: 2, title: '关于加强校园大型集会安全审核的通知', content: '根据最新安全要求，参与人数超过500人的活动需提交详细的安全预案...', created_at: '2026-05-10 14:30', expires_at: null }
+  { id: 1, title: '系统将于本周末进行数据库迁移维护', content: '为了提供更稳定的服务，我们将于周六凌晨2:00至6:00进行停机维护...', created_at: '2026-05-14 09:00', start_time: '', end_time: '' },
+  { id: 2, title: '关于加强校园大型集会安全审核的通知', content: '根据最新安全要求，参与人数超过500人的活动需提交详细的安全预案...', created_at: '2026-05-10 14:30', start_time: '', end_time: '' }
 ]
 
 const fetchAnnouncements = async () => {
   loading.value = true
   try {
-    throw new Error('API not implemented')
+    const res = await getAnnouncements()
+    if (res.code === 200) {
+      announcements.value = res.data
+      totalPages.value = Math.ceil(announcements.value.length / pageSize)
+    } else {
+      throw new Error()
+    }
   } catch {
     announcements.value = mockAnnouncements
     totalPages.value = 1
@@ -115,14 +119,15 @@ const fetchAnnouncements = async () => {
 const modalVisible = ref(false)
 const modalTitle = ref('发布公告')
 const editingId = ref<number | null>(null)
-const form = reactive({ title: '', content: '', expires_at: '' })
+const form = reactive({ title: '', content: '', start_time: '', end_time: '' })
 
 const openCreateModal = () => {
   modalTitle.value = '发布公告'
   editingId.value = null
   form.title = ''
   form.content = ''
-  form.expires_at = ''
+  form.start_time = ''
+  form.end_time = ''
   modalVisible.value = true
 }
 const openEditModal = (ann: any) => {
@@ -130,7 +135,8 @@ const openEditModal = (ann: any) => {
   editingId.value = ann.id
   form.title = ann.title
   form.content = ann.content
-  form.expires_at = ann.expires_at || ''
+  form.start_time = ann.start_time || ''
+  form.end_time = ann.end_time || ''
   modalVisible.value = true
 }
 const submitAnnouncement = async () => {
@@ -140,10 +146,10 @@ const submitAnnouncement = async () => {
   }
   try {
     if (editingId.value) {
-      // await updateAnnouncement(editingId.value, { title: form.title, content: form.content, expires_at: form.expires_at || undefined })
+      // 更新接口暂缺，此处模拟
       alert('公告已更新')
     } else {
-      // await createAnnouncement({ title: form.title, content: form.content, expires_at: form.expires_at || undefined })
+      await publishAnnouncement(form)
       alert('公告发布成功')
     }
     modalVisible.value = false
@@ -155,7 +161,7 @@ const submitAnnouncement = async () => {
 const deleteAnnouncement = async (id: number) => {
   if (!confirm('确定删除该公告吗？')) return
   try {
-    // await deleteAnnouncement(id)
+    await deleteAnnouncement(id)
     alert('已删除')
     fetchAnnouncements()
   } catch {

@@ -1,15 +1,11 @@
 <template>
   <div class="flex h-screen">
-    <!-- 侧边栏（同上） -->
     <aside class="w-64 bg-white shadow-md flex flex-col z-10">
       <div class="p-4 border-b">
         <h1 class="text-xl font-bold text-blue-600">CampusActivity</h1>
         <p class="text-xs text-gray-500">管理员面板</p>
       </div>
       <nav class="flex-1 p-2 space-y-1">
-        <router-link to="/admin/dashboard" class="flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition-colors" active-class="bg-blue-50 text-blue-600">
-          <iconify-icon icon="ph:gauge" class="mr-2 w-5 h-5"></iconify-icon> 控制台
-        </router-link>
         <router-link to="/admin/audit" class="flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition-colors" active-class="bg-blue-50 text-blue-600">
           <iconify-icon icon="ph:check-circle" class="mr-2 w-5 h-5"></iconify-icon> 活动审核
         </router-link>
@@ -34,7 +30,6 @@
 
     <main class="flex-1 overflow-y-auto bg-gradient-to-br from-blue-50 to-blue-100 p-6">
       <AppPageContainer variant="gradient" padding="lg" max-width="2xl">
-        <!-- 以下为原 ActivityAudit.vue 的完整内容，未做任何删改 -->
         <div class="mb-6">
           <h1 class="text-3xl font-bold text-white">活动审核</h1>
           <p class="text-white/70 mt-1">审核活动申请</p>
@@ -116,6 +111,7 @@ import { useRouter } from 'vue-router'
 import AppPageContainer from '@/components/layout/AppPageContainer.vue'
 import AppCard from '@/components/common/AppCard.vue'
 import AppButton from '@/components/common/AppButton.vue'
+import { getAdminActivities, getCategories } from '@/api/admin'
 
 const router = useRouter()
 const loading = ref(false)
@@ -158,8 +154,20 @@ const statusColorClass = (status: string) => {
 
 const fetchCategories = async () => {
   try {
-    // const res = await getCategories()
-    throw new Error('API not implemented')
+    const res = await getCategories()
+    if (res.code === 200 && res.data) {
+      // 处理树形结构
+      const flat: any[] = []
+      res.data.forEach((cat: any) => {
+        flat.push({ id: cat.id, name: cat.name })
+        if (cat.children) {
+          cat.children.forEach((child: any) => flat.push({ id: child.id, name: child.name }))
+        }
+      })
+      categories.value = flat
+    } else {
+      throw new Error()
+    }
   } catch {
     categories.value = mockCategories
   }
@@ -168,8 +176,27 @@ const fetchCategories = async () => {
 const fetchActivities = async () => {
   loading.value = true
   try {
-    // const res = await getAdminActivities({ ... })
-    throw new Error('API not implemented')
+    let statusParam = ''
+    if (filters.status === 'pending') {
+      statusParam = 'pending'
+    } else if (filters.status === 'end') {
+      statusParam = 'approved,rejected,removed'
+    }
+    const params: any = {
+      page: currentPage.value,
+      page_size: pageSize,
+      status: statusParam || undefined,
+      category_id: filters.categoryId || undefined,
+      start_date: filters.startDateFrom || undefined,
+      end_date: filters.startDateTo || undefined
+    }
+    const res = await getAdminActivities(params)
+    if (res.code === 200) {
+      activities.value = res.data.list
+      totalPages.value = Math.ceil(res.data.total / pageSize)
+    } else {
+      throw new Error()
+    }
   } catch {
     if (filters.status === 'pending') {
       activities.value = mockActivitiesPending

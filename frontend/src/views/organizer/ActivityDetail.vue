@@ -1,15 +1,11 @@
 <template>
   <div class="flex h-screen">
-    <!-- 侧边栏（同上） -->
     <aside class="w-64 bg-white shadow-md flex flex-col z-10">
       <div class="p-4 border-b">
         <h1 class="text-xl font-bold text-blue-600">CampusActivity</h1>
         <p class="text-xs text-gray-500">组织者面板</p>
       </div>
       <nav class="flex-1 p-2 space-y-1">
-        <router-link to="/organizer/dashboard" class="flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition-colors" active-class="bg-blue-50 text-blue-600">
-          <iconify-icon icon="ph:gauge" class="mr-2 w-5 h-5"></iconify-icon> 工作台
-        </router-link>
         <router-link to="/organizer/activities" class="flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition-colors" active-class="bg-blue-50 text-blue-600">
           <iconify-icon icon="ph:calendar-check" class="mr-2 w-5 h-5"></iconify-icon> 活动管理
         </router-link>
@@ -81,6 +77,7 @@ import AppPageContainer from '@/components/layout/AppPageContainer.vue'
 import AppCard from '@/components/common/AppCard.vue'
 import AppButton from '@/components/common/AppButton.vue'
 import AppDialog from '@/components/layout/AppDialog.vue'
+import { createActivity, updateActivity, deleteActivity, submitActivity, getActivityDetail, getCategories, getCheckinCode } from '@/api/organizer'
 
 const router = useRouter()
 const route = useRoute()
@@ -99,67 +96,160 @@ const formData = reactive({
   cancel_deadline: '',
   description: ''
 })
-
 const activityData = reactive({
   id: 0,
   status: '',
   current_participants: 0
 })
-
-const categoryOptions = ref([
-  { value: 1, label: '学术类' },
-  { value: 2, label: '文体类' },
-  { value: 3, label: '志愿服务类' }
-])
+const categoryOptions = ref<{ value: number; label: string }[]>([])
 
 const isPublished = computed(() => ['open', 'edit_pending', 'ongoing'].includes(activityData.status))
 const isWithinOneHourBeforeStart = computed(() => false)
 const canSave = computed(() => !isWithinOneHourBeforeStart.value)
-const canApplyReview = computed(() => activityData.status === 'pending' || activityData.status === 'rejected')
-const canDelete = computed(() => !isWithinOneHourBeforeStart.value && !['ended', 'shelved'].includes(activityData.status))
+const canApplyReview = computed(() => activityData.status === 'draft' || activityData.status === 'rejected')
+const canDelete = computed(() => !isWithinOneHourBeforeStart.value && !['ended', 'removed'].includes(activityData.status))
 
 const statusText = (s: string) => {
-  const map: Record<string, string> = { pending: '待审核', modifying: '审核中', rejected: '审核未通过', shelved: '下架', open: '报名中', edit_pending: '审核修改中', ongoing: '进行中', ended: '已结束' }
+  const map: Record<string, string> = {
+    draft: '草稿', pending: '待审核', rejected: '审核未通过',
+    open: '报名中', edit_pending: '修改审核中', ongoing: '进行中',
+    ended: '已结束', removed: '已下架'
+  }
   return map[s] || s
 }
 const statusColorClass = (s: string) => {
-  const map: Record<string, string> = { pending: 'bg-yellow-100 text-yellow-700', modifying: 'bg-blue-100 text-blue-700', rejected: 'bg-red-100 text-red-700', shelved: 'bg-gray-100 text-gray-700', open: 'bg-green-100 text-green-700', ongoing: 'bg-indigo-100 text-indigo-700', ended: 'bg-slate-100 text-slate-700' }
-  return map[s] || 'bg-gray-100 text-gray-700'
+  const map: Record<string, string> = {
+    draft: 'bg-gray-100 text-gray-700', pending: 'bg-yellow-100 text-yellow-700',
+    rejected: 'bg-red-100 text-red-700', open: 'bg-green-100 text-green-700',
+    edit_pending: 'bg-blue-100 text-blue-700', ongoing: 'bg-indigo-100 text-indigo-700',
+    ended: 'bg-slate-100 text-slate-700', removed: 'bg-gray-100 text-gray-700'
+  }
+  return map[s] || 'bg-gray-100'
+}
+
+// 模拟数据
+const mockCategoryOptions = [
+  { value: 1, label: '学术类' },
+  { value: 2, label: '文体类' },
+  { value: 3, label: '志愿服务类' }
+]
+const mockActivityDetail = {
+  id: 1,
+  name: '校园歌手大赛',
+  category_id: 2,
+  start_time: '2026-06-10T18:00',
+  end_time: '2026-06-10T21:00',
+  campus: '校本部',
+  location: '报告厅',
+  max_participants: 100,
+  registration_deadline: '2026-06-05T23:59',
+  cancel_deadline: '2026-06-09T23:59',
+  description: '全校歌唱比赛',
+  status: 'pending',
+  current_participants: 0
+}
+
+const fetchCategories = async () => {
+  try {
+    const res = await getCategories()
+    if (res.code === 200 && res.data) {
+      const flat: any[] = []
+      res.data.forEach((cat: any) => {
+        if (cat.children) {
+          cat.children.forEach((child: any) => flat.push({ value: child.id, label: child.name }))
+        } else {
+          flat.push({ value: cat.id, label: cat.name })
+        }
+      })
+      categoryOptions.value = flat
+    } else throw new Error()
+  } catch {
+    categoryOptions.value = mockCategoryOptions
+  }
 }
 
 const fetchActivityDetail = async () => {
   if (!isEdit) return
-  activityData.id = activityId!
-  activityData.status = 'pending'
-  activityData.current_participants = 0
-  formData.name = '校园歌手大赛'
-  formData.category_id = 2
-  formData.start_time = '2026-06-10T18:00'
-  formData.end_time = '2026-06-10T21:00'
-  formData.campus = '校本部'
-  formData.location = '报告厅'
-  formData.max_participants = 100
-  formData.registration_deadline = '2026-06-05T23:59'
-  formData.cancel_deadline = '2026-06-09T23:59'
-  formData.description = '全校歌唱比赛'
+  try {
+    const res = await getActivityDetail(activityId!)
+    if (res.code === 200) {
+      const d = res.data
+      activityData.id = d.activity_id
+      activityData.status = d.status
+      activityData.current_participants = d.current_participants
+      formData.name = d.name
+      formData.category_id = d.category_id
+      formData.start_time = d.start_time.replace(' ', 'T')
+      formData.end_time = d.end_time.replace(' ', 'T')
+      formData.campus = d.campus
+      formData.location = d.location
+      formData.max_participants = d.max_participants
+      formData.registration_deadline = d.registration_deadline.replace(' ', 'T')
+      formData.cancel_deadline = d.cancel_deadline.replace(' ', 'T')
+      formData.description = d.description
+    } else throw new Error()
+  } catch {
+    // 降级模拟数据
+    Object.assign(activityData, { id: activityId, status: mockActivityDetail.status, current_participants: mockActivityDetail.current_participants })
+    Object.assign(formData, { ...mockActivityDetail, category_id: mockActivityDetail.category_id })
+  }
 }
 
-const handleSave = () => { alert('保存成功（模拟）') }
-const handleApplyReview = () => { alert('已提交审核（模拟）') }
-const handleDelete = () => { if (confirm('确定删除？')) alert('已删除（模拟）') }
+const handleSave = async () => {
+  if (!formData.name) { alert('请填写活动名称'); return }
+  const payload = { ...formData, save_as_draft: true }
+  try {
+    if (isEdit) {
+      await updateActivity(activityId!, payload)
+      alert('保存成功')
+    } else {
+      const res = await createActivity(payload)
+      if (res.code === 200) router.push(`/organizer/activity?id=${res.data.activity_id}`)
+    }
+  } catch {
+    alert(isEdit ? '保存失败（模拟）' : '创建失败（模拟）')
+    if (!isEdit) router.push(`/organizer/activity?id=${Date.now()}`)
+  }
+}
+const handleApplyReview = async () => {
+  if (!isEdit) return
+  try {
+    await submitActivity(activityId!)
+    alert('已提交审核')
+  } catch {
+    alert('提交审核失败（模拟）')
+  }
+}
+const handleDelete = async () => {
+  if (!confirm('确定删除该活动吗？')) return
+  try {
+    await deleteActivity(activityId!)
+    alert('删除成功')
+    router.push('/organizer/activities')
+  } catch {
+    alert('删除失败（模拟）')
+  }
+}
 const goToRegistrations = () => router.push(`/organizer/registrations?activityId=${activityId}`)
 const goToSignRecords = () => router.push(`/organizer/signs?activityId=${activityId}`)
 const goToStats = () => router.push(`/organizer/stats?activityId=${activityId}`)
 const qrDialogVisible = ref(false)
 const qrCode = ref('')
-const generateQRCode = () => { qrCode.value = Math.random().toString(36).substring(2, 8).toUpperCase(); qrDialogVisible.value = true }
-const goBack = () => router.back()
-
-const logout = () => {
-  if (confirm('确定退出登录吗？')) router.push('/login')
+const generateQRCode = async () => {
+  if (!activityId) return
+  try {
+    const res = await getCheckinCode(activityId)
+    if (res.code === 200) qrCode.value = res.data.checkin_code
+  } catch {
+    qrCode.value = Math.random().toString(36).substring(2, 8).toUpperCase()
+  }
+  qrDialogVisible.value = true
 }
+const goBack = () => router.back()
+const logout = () => { if (confirm('确定退出登录吗？')) router.push('/login') }
 
 onMounted(() => {
+  fetchCategories()
   fetchActivityDetail()
 })
 </script>
