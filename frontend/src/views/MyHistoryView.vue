@@ -60,19 +60,25 @@ async function fetchList() {
   loading.value = true
   try {
     const params: Record<string, unknown> = {
-      type: tab.value,
       page: page.value,
       page_size: pageSize,
     }
-    if (filters.value.keyword) params.keyword = filters.value.keyword
+    if (filters.value.keyword) params.name = filters.value.keyword
     if (filters.value.activity_id) params.activity_id = Number(filters.value.activity_id)
     if (filters.value.category_id) params.category_id = Number(filters.value.category_id)
     if (startDate.value) params.start_date = startDate.value
     if (filters.value.campus) params.campus = filters.value.campus.replace('校区', '')
 
-    const data = await getMyRegistrations(params)
-    list.value = data.list
-    total.value = data.total
+    const data = await getMyRegistrations(params as Parameters<typeof getMyRegistrations>[0])
+    const now = Date.now()
+    let items = data.list
+    if (tab.value === 'upcoming') {
+      items = items.filter((r) => new Date(r.end_time.replace(/-/g, '/')).getTime() > now)
+    } else {
+      items = items.filter((r) => new Date(r.end_time.replace(/-/g, '/')).getTime() <= now)
+    }
+    list.value = items
+    total.value = items.length
   } catch (e) {
     showApiError(e)
   } finally {

@@ -64,14 +64,18 @@ async function fetchList() {
       status: statusTab.value,
     }
     if (filters.value.keyword) params.keyword = filters.value.keyword
-    if (filters.value.activity_id) params.activity_id = Number(filters.value.activity_id)
     if (filters.value.category_id) params.category_id = Number(filters.value.category_id)
     if (startDate.value) params.start_date = startDate.value
     if (filters.value.campus) params.campus = filters.value.campus.replace('校区', '')
 
     const data = await getActivities(params)
-    activities.value = data.list
-    total.value = data.total
+    let list = data.list
+    if (filters.value.activity_id) {
+      const id = Number(filters.value.activity_id)
+      if (!Number.isNaN(id)) list = list.filter((a) => a.activity_id === id)
+    }
+    activities.value = list
+    total.value = filters.value.activity_id ? list.length : data.total
   } catch (e) {
     showApiError(e)
   } finally {
@@ -177,7 +181,7 @@ const days = Array.from({ length: 31 }, (_, i) => String(i + 1))
               <td>{{ item.name }}</td>
               <td>{{ item.campus }}{{ item.location }}</td>
               <td>{{ formatDateTime(item.start_time) }}</td>
-              <td>{{ formatDateTime(item.end_time) }}</td>
+              <td>{{ item.end_time ? formatDateTime(item.end_time) : '—' }}</td>
               <td>{{ item.category_name }}</td>
               <td>{{ item.current_participants }}/{{ item.max_participants }}</td>
             </tr>

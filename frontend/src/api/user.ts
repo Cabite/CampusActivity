@@ -1,4 +1,4 @@
-import { apiDelete, apiGet, apiPut, apiUpload } from './request'
+import { apiDelete, apiGet, apiPost, apiPut, apiUpload } from './request'
 import type { UserProfile } from '@/types/api'
 
 export function getProfile() {
@@ -13,6 +13,15 @@ export function uploadAvatar(file: File) {
   const form = new FormData()
   form.append('avatar', file)
   return apiUpload<{ avatar_url: string }>('/user/avatar', form)
+}
+
+/** 文档 3.4：POST /user/reset-password */
+export function resetPassword(payload: {
+  token: string
+  new_password: string
+  confirm_password: string
+}) {
+  return apiPost<null>('/user/reset-password', payload)
 }
 
 export function deleteAccount() {

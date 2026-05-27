@@ -2,12 +2,10 @@ import type { MockMethod } from 'vite-plugin-mock'
 
 export default [
   {
-    url: '/api/auth/login',
+    url: '/auth/login',
     method: 'post',
-    response: ({ body }: { body: { role?: string; account?: string; password?: string } }) => {
-      const account = body.account || ''
-      const password = body.password || ''
-      if (account === '2024000001' && password === 'password123') {
+    response: ({ body }: { body: { account?: string; password?: string } }) => {
+      if (body.account === '2024000001' && body.password === 'password123') {
         return {
           code: 200,
           message: '登录成功',
@@ -23,17 +21,34 @@ export default [
     },
   },
   {
-    url: '/api/auth/register/user',
+    url: '/auth/register/user',
     method: 'post',
     response: () => ({
       code: 200,
-      message: '注册成功',
-      data: { user_id: 2, role: 'user', status: 'active' },
+      message: '注册成功，已自动登录',
+      data: { userId: 1001, token: 'mock-token-student-new' },
     }),
   },
   {
-    url: '/api/auth/logout',
+    url: '/auth/logout',
     method: 'post',
     response: () => ({ code: 200, message: '退出成功', data: null }),
+  },
+  {
+    url: '/user/reset-password',
+    method: 'post',
+    response: ({
+      body,
+    }: {
+      body: { token?: string; new_password?: string; confirm_password?: string }
+    }) => {
+      if (!body.token) {
+        return { code: 400, message: 'token无效', data: null }
+      }
+      if (!body.new_password || body.new_password !== body.confirm_password) {
+        return { code: 400, message: '两次密码不一致', data: null }
+      }
+      return { code: 200, message: '密码重置成功', data: null }
+    },
   },
 ] as MockMethod[]

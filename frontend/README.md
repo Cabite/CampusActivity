@@ -35,4 +35,17 @@ src/
   utils/            # 工具函数、校验、常量
   views/            # 页面
   types/            # 类型定义
+mock/               # 开发 Mock（路径无 /api 前缀）
 ```
+
+## 最新接口文档对齐说明（`接口.docx`）
+
+- 基础路径：无 `/api` 前缀，`VITE_API_BASE_URL` 留空
+- 报名：`POST /activities/{id}/register` · 取消：`DELETE /activities/{id}/register`
+- 我的报名：`GET /user/registrations`（`name`、`activity_id`、`category_id`、`start_date`、`campus`）
+- 签到：`POST /activities/{id}/checkin`（body 仅 `checkin_code`）
+- 排行榜：`GET /leaderboard`（`period`、`college`、`grade`；响应 `total` + `list`，展示学号）
+- 改密：`POST /user/reset-password`（`token`、`new_password`、`confirm_password`；个人中心先校验旧密码再调用）
+- 活动详情：`is_registered`、`registration_status`、`check_status`
+- 活动列表查询无 `activity_id` 参数，按 ID 筛选在前端完成
+- 注册成功返回 `userId` + `token`，自动登录

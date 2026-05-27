@@ -3,7 +3,6 @@ import vue from '@vitejs/plugin-vue'
 import { viteMockServe } from 'vite-plugin-mock'
 import { fileURLToPath, URL } from 'node:url'
 
-
 export default defineConfig({
   plugins: [
     vue(),
