@@ -4,11 +4,11 @@ import type { ActivityDetail, ActivityListItem, CategoryNode, PaginatedList } fr
 export interface ActivityQuery {
   page?: number
   page_size?: number
+  /** 支持多状态逗号分隔，如 open,ongoing */
   status?: string
   category_id?: number
   campus?: string
   keyword?: string
-  activity_id?: number
   start_date?: string
 }
 

@@ -6,8 +6,8 @@ export interface ApiResponse<T = unknown> {
 
 export interface PaginatedList<T> {
   total: number
-  page: number
-  page_size: number
+  page?: number
+  page_size?: number
   list: T[]
 }
 
@@ -46,6 +46,7 @@ export interface ActivityListItem {
   activity_id: number
   name: string
   start_time: string
+  /** 列表接口可能不返回，详情必有 */
   end_time?: string
   category_name: string
   category_path?: string
@@ -55,6 +56,14 @@ export interface ActivityListItem {
   max_participants: number
   status?: string
 }
+
+export type RegistrationStatus =
+  | null
+  | 'registered'
+  | 'cancelled'
+  | 'rejected'
+  | 're_registered'
+  | 'blocked'
 
 export interface ActivityDetail extends ActivityListItem {
   organizer_id: number
@@ -66,8 +75,8 @@ export interface ActivityDetail extends ActivityListItem {
   description: string
   status: string
   is_registered: boolean
-  registration_status: string | null
-  /** 当前用户是否已签到 */
+  registration_status: RegistrationStatus | string
+  /** 当前用户是否已签到（文档示例可能为字符串 "true"） */
   check_status?: boolean | string
 }
 
@@ -113,10 +122,20 @@ export interface AnnouncementItem {
 export interface RankingItem {
   rank: number
   user_id: number
-  username?: string
   student_id: string
   college: string
   grade: string
   registration_count?: number
   effective_participation_count: number
+}
+
+export interface LeaderboardData {
+  total: number
+  list: RankingItem[]
+}
+
+export interface NotificationsData {
+  total: number
+  unread_count: number
+  list: NotificationItem[]
 }

@@ -23,8 +23,21 @@ const checkinLoading = ref(false)
 const showCancelConfirm = ref(false)
 const showCheckinDialog = ref(false)
 
-const canRegister = computed(() => activity.value?.status === 'open' && !activity.value?.is_registered)
-const canCancel = computed(() => activity.value?.status === 'open' && activity.value?.is_registered)
+const canRegister = computed(() => {
+  const a = activity.value
+  if (!a || a.status !== 'open' || a.is_registered) return false
+  const rs = a.registration_status
+  return rs !== 'blocked' && rs !== 'rejected'
+})
+
+const canCancel = computed(() => {
+  const a = activity.value
+  return a?.status === 'open' && a.is_registered && a.registration_status === 'registered'
+})
+
+function isCheckedIn(a: ActivityDetail) {
+  return a.check_status === true || a.check_status === 'true'
+}
 
 const durationText = computed(() => {
   if (!activity.value) return '-'
@@ -55,6 +68,7 @@ async function handleRegister() {
     const res = await registerActivity(activity.value.activity_id)
     toast.success('报名成功')
     activity.value.is_registered = true
+    activity.value.registration_status = res.status
     activity.value.current_participants = activity.value.max_participants - res.remaining_slots
   } catch (e) {
     showApiError(e)
@@ -70,6 +84,7 @@ async function handleCancel() {
     await cancelRegistration(activity.value.activity_id)
     toast.success('取消成功，名额将在2分钟后释放')
     activity.value.is_registered = false
+    activity.value.registration_status = 'cancelled'
     if (activity.value.current_participants > 0) activity.value.current_participants -= 1
     showCancelConfirm.value = false
   } catch (e) {
@@ -88,6 +103,7 @@ async function handleCheckin(code: string) {
   try {
     const res = await checkin(activityId, code.trim())
     toast.success(`签到成功！${formatDateTime(res.checkin_time)}`)
+    if (activity.value) activity.value.check_status = true
     showCheckinDialog.value = false
   } catch (e) {
     showApiError(e)
@@ -156,8 +172,23 @@ async function handleCheckin(code: string) {
             >
               取消报名
             </button>
+            <button
+              v-else-if="activity.registration_status === 'blocked'"
+              type="button"
+              class="proto-btn-outline flex-1 opacity-50"
+              disabled
+            >
+              不可报名
+            </button>
             <button v-else type="button" class="proto-btn-outline flex-1 opacity-50" disabled>已截止</button>
-            <button type="button" class="proto-btn-outline flex-1" @click="showCheckinDialog = true">签到</button>
+            <button
+              type="button"
+              class="proto-btn-outline flex-1"
+              :disabled="activity && isCheckedIn(activity)"
+              @click="showCheckinDialog = true"
+            >
+              {{ activity && isCheckedIn(activity) ? '已签到' : '签到' }}
+            </button>
           </div>
         </div>
 

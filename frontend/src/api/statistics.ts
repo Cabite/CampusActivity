@@ -1,5 +1,5 @@
 import { apiGet } from './request'
-import type { PaginatedList, RankingItem } from '@/types/api'
+import type { LeaderboardData } from '@/types/api'
 
 export function getLeaderboard(params?: {
   period?: string
@@ -8,5 +8,5 @@ export function getLeaderboard(params?: {
   page?: number
   page_size?: number
 }) {
-  return apiGet<PaginatedList<RankingItem>>('/leaderboard', params as Record<string, unknown>)
+  return apiGet<LeaderboardData>('/leaderboard', params as Record<string, unknown>)
 }

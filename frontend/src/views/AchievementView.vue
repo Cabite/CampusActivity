@@ -82,7 +82,7 @@ function isCurrentUser(item: RankingItem) {
           <thead>
             <tr>
               <th class="w-16">排名</th>
-              <th>用户名</th>
+              <th>学号</th>
               <th class="text-right">有效活动参与次数</th>
             </tr>
           </thead>
@@ -96,7 +96,7 @@ function isCurrentUser(item: RankingItem) {
                 <Trophy v-if="item.rank === 1" class="absolute -left-2 h-5 w-5 text-amber-500" />
                 {{ item.rank }}
               </td>
-              <td>{{ item.username || item.student_id }}</td>
+              <td>{{ item.student_id }}</td>
               <td class="text-right">{{ item.effective_participation_count }}</td>
             </tr>
             <tr v-for="n in Math.max(0, 6 - list.length)" :key="'e' + n">

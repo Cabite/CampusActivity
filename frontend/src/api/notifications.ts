@@ -1,11 +1,8 @@
 import { apiGet, apiPut } from './request'
-import type { AnnouncementItem, NotificationItem, PaginatedList } from '@/types/api'
+import type { AnnouncementItem, NotificationsData } from '@/types/api'
 
 export function getNotifications(params?: { page?: number; page_size?: number }) {
-  return apiGet<PaginatedList<NotificationItem> & { unread_count: number }>(
-    '/notifications',
-    params as Record<string, unknown>,
-  )
+  return apiGet<NotificationsData>('/notifications', params as Record<string, unknown>)
 }
 
 export function markNotificationRead(id: number) {

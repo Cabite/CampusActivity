@@ -37,6 +37,18 @@ export default [
   {
     url: '/user/reset-password',
     method: 'post',
-    response: () => ({ code: 200, message: '密码重置成功', data: null }),
+    response: ({
+      body,
+    }: {
+      body: { token?: string; new_password?: string; confirm_password?: string }
+    }) => {
+      if (!body.token) {
+        return { code: 400, message: 'token无效', data: null }
+      }
+      if (!body.new_password || body.new_password !== body.confirm_password) {
+        return { code: 400, message: '两次密码不一致', data: null }
+      }
+      return { code: 200, message: '密码重置成功', data: null }
+    },
   },
 ] as MockMethod[]

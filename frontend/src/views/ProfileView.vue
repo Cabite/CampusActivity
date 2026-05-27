@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { getProfile, updateProfile, uploadAvatar, deleteAccount } from '@/api/user'
-import { logout, changePassword } from '@/api/auth'
+import { getProfile, updateProfile, uploadAvatar, deleteAccount, resetPassword } from '@/api/user'
+import { login, logout } from '@/api/auth'
 import { showApiError } from '@/api/request'
 import { useAuthStore } from '@/stores/auth'
 import { useUserStore } from '@/stores/user'
@@ -77,21 +77,33 @@ async function handleSave() {
 }
 
 async function handleChangePassword() {
+  if (!profile.value) return
+  if (!passwordForm.value.old_password) {
+    toast.error('请输入现有密码')
+    return
+  }
   if (!isPassword(passwordForm.value.new_password)) {
     toast.error('新密码须为6-20位')
     return
   }
+  if (passwordForm.value.new_password !== passwordForm.value.confirm_password) {
+    toast.error('两次新密码不一致')
+    return
+  }
   passwordLoading.value = true
   try {
-    await changePassword(
-      passwordForm.value.old_password,
-      passwordForm.value.new_password,
-      passwordForm.value.confirm_password,
-    )
+    const loginData = await login(profile.value.student_id, passwordForm.value.old_password)
+    await resetPassword({
+      token: loginData.token,
+      new_password: passwordForm.value.new_password,
+      confirm_password: passwordForm.value.confirm_password,
+    })
+    auth.setAuth(loginData.token, loginData.user_id)
     toast.success('密码修改成功')
+    passwordForm.value = { old_password: '', new_password: '', confirm_password: '' }
     showPasswordDialog.value = false
   } catch (e) {
-    showApiError(e)
+    showApiError(e, '现有密码错误或修改失败')
   } finally {
     passwordLoading.value = false
   }

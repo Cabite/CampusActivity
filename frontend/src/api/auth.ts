@@ -14,9 +14,9 @@ export interface RegisterPayload {
   phone?: string
 }
 
-export function login(account: string, password: string) {
+export function login(account: string, password: string, role = 'user') {
   return apiPost<LoginData>('/auth/login', {
-    role: 'user',
+    role,
     account,
     password,
   })
@@ -28,13 +28,4 @@ export function register(payload: RegisterPayload) {
 
 export function logout() {
   return apiPost<null>('/auth/logout')
-}
-
-/** 修改密码（文档 1.7） */
-export function changePassword(old_password: string, new_password: string, confirm_password: string) {
-  return apiPost<null>('/user/reset-password', {
-    old_password,
-    new_password,
-    confirm_password,
-  })
 }

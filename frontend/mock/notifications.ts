@@ -10,8 +10,6 @@ export default [
       data: {
         total: 2,
         unread_count: 1,
-        page: 1,
-        page_size: 20,
         list: [
           {
             notification_id: 1,

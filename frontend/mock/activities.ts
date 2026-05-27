@@ -55,8 +55,14 @@ export default [
       if (query.keyword) {
         list = list.filter((a) => a.name.includes(query.keyword))
       }
-      if (query.activity_id) {
-        list = list.filter((a) => String(a.activity_id) === String(query.activity_id))
+      if (query.campus) {
+        list = list.filter((a) => a.campus === query.campus)
+      }
+      if (query.category_id) {
+        /* mock 简化：不按分类过滤 */
+      }
+      if (query.start_date) {
+        list = list.filter((a) => a.start_time.startsWith(query.start_date))
       }
       return {
         code: 200,

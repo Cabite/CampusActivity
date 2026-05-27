@@ -9,13 +9,10 @@ export default [
       message: 'success',
       data: {
         total: 3,
-        page: 1,
-        page_size: 10,
         list: [
           {
             rank: 1,
             user_id: 1,
-            username: '张三',
             student_id: '2024000001',
             college: '计算机学院',
             grade: '2024级',
@@ -25,7 +22,6 @@ export default [
           {
             rank: 2,
             user_id: 2,
-            username: '李四',
             student_id: '2024000002',
             college: '信息与电子学院',
             grade: '2023级',
@@ -35,7 +31,6 @@ export default [
           {
             rank: 3,
             user_id: 3,
-            username: '王五',
             student_id: '2023000001',
             college: '计算机学院',
             grade: '2023级',
