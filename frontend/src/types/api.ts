@@ -101,6 +101,20 @@ export interface RegistrationItem {
   checkin_time?: string | null
 }
 
+/** GET /user/checkins 签到记录 */
+export interface CheckinItem {
+  activity_id: number
+  activity_name: string
+  activity_start_time: string
+  checkin_time: string
+  checkin_method: string
+}
+
+export interface CheckinsData {
+  total: number
+  list: CheckinItem[]
+}
+
 export interface NotificationItem {
   notification_id: number
   title: string

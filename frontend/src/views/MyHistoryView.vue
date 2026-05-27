@@ -2,6 +2,7 @@
 import { ref, watch, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { getMyRegistrations } from '@/api/registrations'
+import { getMyCheckins } from '@/api/checkin'
 import { getCategories } from '@/api/activities'
 import { showApiError } from '@/api/request'
 import type { CategoryNode, RegistrationItem } from '@/types/api'
@@ -15,6 +16,8 @@ import { Search } from 'lucide-vue-next'
 const router = useRouter()
 const tab = ref<'upcoming' | 'past'>('upcoming')
 const list = ref<RegistrationItem[]>([])
+/** 签到方式（activity_id -> method），来自 GET /user/checkins */
+const checkinMethods = ref<Record<number, string>>({})
 const categories = ref<CategoryNode[]>([])
 const total = ref(0)
 const page = ref(1)
@@ -56,34 +59,66 @@ onMounted(async () => {
   await fetchList()
 })
 
+function buildQueryParams() {
+  const params: Record<string, unknown> = {
+    page: page.value,
+    page_size: pageSize,
+  }
+  if (filters.value.keyword) params.name = filters.value.keyword
+  if (filters.value.activity_id) params.activity_id = Number(filters.value.activity_id)
+  if (filters.value.category_id) params.category_id = Number(filters.value.category_id)
+  if (startDate.value) params.start_date = startDate.value
+  if (filters.value.campus) params.campus = filters.value.campus.replace('校区', '')
+  return params
+}
+
 async function fetchList() {
   loading.value = true
+  checkinMethods.value = {}
   try {
-    const params: Record<string, unknown> = {
-      page: page.value,
-      page_size: pageSize,
-    }
-    if (filters.value.keyword) params.name = filters.value.keyword
-    if (filters.value.activity_id) params.activity_id = Number(filters.value.activity_id)
-    if (filters.value.category_id) params.category_id = Number(filters.value.category_id)
-    if (startDate.value) params.start_date = startDate.value
-    if (filters.value.campus) params.campus = filters.value.campus.replace('校区', '')
-
-    const data = await getMyRegistrations(params as Parameters<typeof getMyRegistrations>[0])
+    const params = buildQueryParams()
     const now = Date.now()
-    let items = data.list
-    if (tab.value === 'upcoming') {
-      items = items.filter((r) => new Date(r.end_time.replace(/-/g, '/')).getTime() > now)
+
+    if (tab.value === 'past') {
+      const [regData, checkinData] = await Promise.all([
+        getMyRegistrations(params as Parameters<typeof getMyRegistrations>[0]),
+        getMyCheckins(params as Parameters<typeof getMyCheckins>[0]),
+      ])
+      const checkinMap = new Map(checkinData.list.map((c) => [c.activity_id, c]))
+      checkinMethods.value = Object.fromEntries(
+        checkinData.list.map((c) => [c.activity_id, c.checkin_method]),
+      )
+      let items = regData.list.filter(
+        (r) => new Date(r.end_time.replace(/-/g, '/')).getTime() <= now,
+      )
+      list.value = items.map((r) => {
+        const c = checkinMap.get(r.activity_id)
+        if (!c) return r
+        return {
+          ...r,
+          checkin_status: 'checked' as const,
+          checkin_time: c.checkin_time,
+        }
+      })
+      total.value = regData.total
     } else {
-      items = items.filter((r) => new Date(r.end_time.replace(/-/g, '/')).getTime() <= now)
+      const data = await getMyRegistrations(params as Parameters<typeof getMyRegistrations>[0])
+      list.value = data.list.filter(
+        (r) => new Date(r.end_time.replace(/-/g, '/')).getTime() > now,
+      )
+      total.value = data.total
     }
-    list.value = items
-    total.value = items.length
   } catch (e) {
     showApiError(e)
   } finally {
     loading.value = false
   }
+}
+
+function checkinMethodLabel(activityId: number) {
+  const m = checkinMethods.value[activityId]
+  if (!m) return ''
+  return m === 'code' ? '扫码' : m
 }
 
 watch(tab, () => {
@@ -170,6 +205,7 @@ const days = Array.from({ length: 31 }, (_, i) => String(i + 1))
               <th>活动时间</th>
               <th v-if="tab === 'past'">是否签到</th>
               <th v-if="tab === 'past'">签到时间</th>
+              <th v-if="tab === 'past'">签到方式</th>
             </tr>
           </thead>
           <tbody>
@@ -183,6 +219,7 @@ const days = Array.from({ length: 31 }, (_, i) => String(i + 1))
               <td>{{ formatDateTime(item.start_time) }}</td>
               <td v-if="tab === 'past'">{{ item.checkin_status === 'checked' ? '是' : '否' }}</td>
               <td v-if="tab === 'past'">{{ item.checkin_time ? formatDateTime(item.checkin_time) : '-' }}</td>
+              <td v-if="tab === 'past'">{{ checkinMethodLabel(item.activity_id) || '-' }}</td>
             </tr>
           </tbody>
         </table>
