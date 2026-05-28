@@ -1,9 +1,8 @@
 <template>
   <div class="flex h-screen">
     <AdminSidebar />
-
-    <main class="flex-1 overflow-y-auto bg-gradient-to-br from-blue-50 to-blue-100 p-6">
-      <AppPageContainer variant="gradient" padding="lg" max-width="2xl">
+    <main class="flex-1 overflow-y-auto bg-blue-600 p-8">
+      <div class="max-w-7xl mx-auto">
         <div class="mb-6">
           <h1 class="text-3xl font-bold text-white">系统公告管理</h1>
           <p class="text-white/70 mt-1">发布与管理系统公告</p>
@@ -18,8 +17,8 @@
             <div v-for="ann in announcements" :key="ann.announcement_id" class="border-b pb-3">
               <div class="flex justify-between items-start">
                 <div>
-                  <h3 class="font-semibold">{{ ann.title }}</h3>
-                  <p class="text-xs text-gray-400">{{ ann.start_time }}</p>
+                  <h3 class="font-semibold text-gray-900">{{ ann.title }}</h3>
+                  <p class="text-xs text-gray-400 mt-1">{{ ann.start_time ? ann.start_time.replace('T', ' ').slice(0, 19) : '-' }}</p>
                   <p class="text-sm text-gray-600 mt-1">{{ ann.content }}</p>
                 </div>
                 <div class="flex gap-2">
@@ -43,7 +42,7 @@
             <input type="datetime-local" v-model="form.end_time" placeholder="结束时间（可选）" class="w-full border rounded px-3 py-2">
           </div>
         </AppDialog>
-      </AppPageContainer>
+      </div>
     </main>
   </div>
 </template>
@@ -51,13 +50,13 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import AdminSidebar from '@/components/layout/AdminSidebar.vue'
 import AppPageContainer from '@/components/layout/AppPageContainer.vue'
 import AppCard from '@/components/common/AppCard.vue'
 import AppButton from '@/components/common/AppButton.vue'
 import AppDialog from '@/components/layout/AppDialog.vue'
-import { publishAnnouncement, getAnnouncements, removeAnnouncement as apiRemoveAnnouncement } from '@/api/admin'
+import { getAnnouncements, publishAnnouncement, removeAnnouncement as apiRemoveAnnouncement } from '@/api/admin'
 import { showApiError } from '@/api/request'
-import AdminSidebar from '@/components/layout/AdminSidebar.vue'
 
 const router = useRouter()
 const loading = ref(false)

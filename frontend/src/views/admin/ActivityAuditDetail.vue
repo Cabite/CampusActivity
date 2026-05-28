@@ -1,9 +1,8 @@
 <template>
   <div class="flex h-screen">
     <AdminSidebar />
-
-    <main class="flex-1 overflow-y-auto bg-gradient-to-br from-blue-50 to-blue-100 p-6">
-      <AppPageContainer variant="gradient" padding="lg" max-width="2xl">
+    <main class="flex-1 overflow-y-auto bg-blue-600 p-8">
+      <div class="max-w-7xl mx-auto">
         <div class="mb-4">
           <AppButton variant="link" @click="goBack" class="text-white">
             <iconify-icon icon="ph:arrow-left-bold"></iconify-icon> 返回
@@ -12,7 +11,7 @@
 
         <AppCard :loading="loading">
           <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-bold">活动审核详情</h2>
+            <h2 class="text-2xl font-bold text-gray-800">活动审核详情</h2>
             <span class="px-3 py-1 rounded-full text-sm" :class="statusColorClass(activity.status)">
               {{ statusText(activity.status) }}
             </span>
@@ -50,7 +49,7 @@
         <AppDialog v-model:open="removeModalVisible" title="下架理由" confirm-text="确认下架" cancel-text="取消" @confirm="confirmRemove">
           <textarea v-model="removeReason" rows="3" placeholder="请输入下架理由" class="w-full border rounded-lg px-3 py-2"></textarea>
         </AppDialog>
-      </AppPageContainer>
+      </div>
     </main>
   </div>
 </template>
@@ -58,13 +57,13 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import AdminSidebar from '@/components/layout/AdminSidebar.vue'
 import AppPageContainer from '@/components/layout/AppPageContainer.vue'
 import AppCard from '@/components/common/AppCard.vue'
 import AppButton from '@/components/common/AppButton.vue'
 import AppDialog from '@/components/layout/AppDialog.vue'
 import { getActivityDetail, reviewActivity, removeActivity } from '@/api/admin'
 import { showApiError } from '@/api/request'
-import AdminSidebar from '@/components/layout/AdminSidebar.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -72,6 +71,7 @@ const activityId = Number(route.params.id)
 const loading = ref(false)
 
 const activity = reactive({
+  activity_id: 0,
   name: '',
   category_name: '',
   organizer_name: '',
@@ -102,7 +102,8 @@ const statusColorClass = (status: string) => {
 const fetchActivityDetail = async () => {
   loading.value = true
   try {
-    const data = await getActivityDetail(activityId) as any // 类型断言绕过 TS 检查
+    const data = await getActivityDetail(activityId) as any
+    activity.activity_id = data.activity_id
     activity.name = data.name
     activity.category_name = data.category_name
     activity.organizer_name = data.organizer_name
@@ -130,49 +131,31 @@ const approve = async () => {
     await reviewActivity(activityId, 'approve')
     alert('审核通过')
     router.push('/admin/audit')
-  } catch (e) {
-    showApiError(e, '审核失败')
-  }
+  } catch (e) { showApiError(e, '审核失败') }
 }
 
 const rejectModalVisible = ref(false)
 const rejectReason = ref('')
-const openRejectModal = () => {
-  rejectReason.value = ''
-  rejectModalVisible.value = true
-}
+const openRejectModal = () => { rejectReason.value = ''; rejectModalVisible.value = true }
 const confirmReject = async () => {
-  if (!rejectReason.value.trim()) {
-    alert('请填写拒绝理由')
-    return
-  }
+  if (!rejectReason.value.trim()) { alert('请填写拒绝理由'); return }
   try {
     await reviewActivity(activityId, 'reject', rejectReason.value)
     alert('已拒绝')
     router.push('/admin/audit')
-  } catch (e) {
-    showApiError(e, '拒绝失败')
-  }
+  } catch (e) { showApiError(e, '拒绝失败') }
 }
 
 const removeModalVisible = ref(false)
 const removeReason = ref('')
-const openRemoveModal = () => {
-  removeReason.value = ''
-  removeModalVisible.value = true
-}
+const openRemoveModal = () => { removeReason.value = ''; removeModalVisible.value = true }
 const confirmRemove = async () => {
-  if (!removeReason.value.trim()) {
-    alert('请填写下架理由')
-    return
-  }
+  if (!removeReason.value.trim()) { alert('请填写下架理由'); return }
   try {
     await removeActivity(activityId, removeReason.value)
     alert('活动已下架')
     router.push('/admin/audit')
-  } catch (e) {
-    showApiError(e, '下架失败')
-  }
+  } catch (e) { showApiError(e, '下架失败') }
 }
 
 const goBack = () => router.back()

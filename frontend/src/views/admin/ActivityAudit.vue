@@ -1,55 +1,55 @@
 <template>
   <div class="flex h-screen">
     <AdminSidebar />
-
-    <main class="flex-1 overflow-y-auto bg-gradient-to-br from-blue-50 to-blue-100 p-6">
-      <AppPageContainer variant="gradient" padding="lg" max-width="2xl">
+    <main class="flex-1 overflow-y-auto bg-blue-600 p-8">
+      <div class="max-w-7xl mx-auto">
         <div class="mb-6">
           <h1 class="text-3xl font-bold text-white">活动审核</h1>
           <p class="text-white/70 mt-1">审核活动申请</p>
         </div>
 
         <!-- 筛选栏 -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6 flex flex-wrap gap-4 items-end">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8 flex flex-wrap gap-8 items-end">
           <div>
             <label class="block text-xs font-medium text-gray-600 mb-1">审核状态</label>
-            <select v-model="filters.status" class="border rounded-lg px-3 py-2 text-sm w-36">
+            <select v-model="filters.status" class="border rounded-lg px-3 py-2 text-sm w-36 text-gray-900">
               <option value="pending">未审核</option>
               <option value="end">已审核</option>
             </select>
           </div>
           <div>
             <label class="block text-xs font-medium text-gray-600 mb-1">活动分类</label>
-            <select v-model="filters.categoryId" class="border rounded-lg px-3 py-2 text-sm w-36">
+            <select v-model="filters.categoryId" class="border rounded-lg px-3 py-2 text-sm w-36 text-gray-900">
               <option value="">全部</option>
-              <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
+              <option v-for="cat in categories" :key="cat.id" :value="cat.id" class="text-gray-900">{{ cat.name }}</option>
             </select>
           </div>
           <div>
             <label class="block text-xs font-medium text-gray-600 mb-1">开始时间(起)</label>
-            <input type="date" v-model="filters.startDateFrom" class="border rounded-lg px-3 py-2 text-sm w-36">
+            <input type="date" v-model="filters.startDateFrom" class="border rounded-lg px-3 py-2 text-sm w-36 text-gray-900">
           </div>
           <div>
             <label class="block text-xs font-medium text-gray-600 mb-1">开始时间(止)</label>
-            <input type="date" v-model="filters.startDateTo" class="border rounded-lg px-3 py-2 text-sm w-36">
+            <input type="date" v-model="filters.startDateTo" class="border rounded-lg px-3 py-2 text-sm w-36 text-gray-900">
           </div>
-          <div>
-            <button @click="applyFilters" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm">筛选</button>
-            <button @click="resetFilters" class="ml-2 px-4 py-2 border border-gray-300 rounded-lg text-sm">重置</button>
+          <div class="flex gap-3">
+            <button @click="applyFilters" class="px-5 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium shadow-sm hover:bg-blue-700">筛选</button>
+            <button @click="resetFilters" class="px-5 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">重置</button>
           </div>
         </div>
 
-        <AppCard :loading="loading">
+        <!-- 表格 -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
               <thead class="bg-gray-50">
                 <tr>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500">活动名称</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500">组织者</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500">分类</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500">开始时间</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500">校区</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500">状态</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">活动名称</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">组织者</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">分类</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">开始时间</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">校区</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-100">
@@ -57,35 +57,35 @@
                   <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ act.name }}</td>
                   <td class="px-6 py-4 text-sm text-gray-500">{{ act.organizer_name }}</td>
                   <td class="px-6 py-4 text-sm text-gray-500">{{ act.category_name }}</td>
-                  <td class="px-6 py-4 text-sm text-gray-500">{{ act.start_time }}</td>
+                  <td class="px-6 py-4 text-sm text-gray-500">{{ act.start_time ? act.start_time.replace('T', ' ').slice(0, 19) : '-' }}</td>
                   <td class="px-6 py-4 text-sm text-gray-500">{{ act.campus }}</td>
-                  <td class="px-6 py-4">
-                    <span class="px-2 py-1 rounded-full text-xs" :class="statusColorClass(act.status)">{{ statusText(act.status) }}</span>
-                  </td>
+                  <td class="px-6 py-4"><span class="px-2 py-1 rounded-full text-xs font-medium" :class="statusColorClass(act.status)">{{ statusText(act.status) }}</span></td>
                 </tr>
                 <tr v-if="!loading && activities.length === 0">
-                  <td colspan="6" class="text-center py-8 text-gray-400">暂无活动</td>
+                  <td colspan="6" class="text-center py-16 text-gray-400">暂无活动</td>
                 </tr>
               </tbody>
             </table>
           </div>
-          <div v-if="totalPages > 1" class="flex justify-center mt-6 gap-2">
+          <div v-if="totalPages > 1" class="flex justify-center py-4 gap-2">
             <button v-for="p in totalPages" :key="p" @click="goToPage(p)" class="px-3 py-1 rounded border" :class="p === currentPage ? 'bg-blue-600 text-white' : 'text-gray-700'">{{ p }}</button>
           </div>
-        </AppCard>
-      </AppPageContainer>
+        </div>
+      </div>
     </main>
   </div>
 </template>
 
 <script setup lang="ts">
+// 保持原有所有脚本逻辑不变，此处仅列出必要的导入和变量，实际请保留您原来的完整脚本
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import AdminSidebar from '@/components/layout/AdminSidebar.vue'
 import AppPageContainer from '@/components/layout/AppPageContainer.vue'
 import AppCard from '@/components/common/AppCard.vue'
+import AppButton from '@/components/common/AppButton.vue'
 import { getAdminActivities, getCategories } from '@/api/admin'
 import { showApiError } from '@/api/request'
-import AdminSidebar from '@/components/layout/AdminSidebar.vue'
 
 const router = useRouter()
 const loading = ref(false)
@@ -119,9 +119,7 @@ const fetchCategories = async () => {
       if (cat.children) cat.children.forEach((child: any) => flat.push({ id: child.id, name: child.name }))
     })
     categories.value = flat
-  } catch (e) {
-    showApiError(e, '获取分类失败')
-  }
+  } catch (e) { showApiError(e, '获取分类失败') }
 }
 
 const fetchActivities = async () => {
@@ -141,17 +139,10 @@ const fetchActivities = async () => {
     const data = await getAdminActivities(params)
     activities.value = data.items
     totalPages.value = Math.ceil(data.total / pageSize)
-  } catch (e) {
-    showApiError(e, '获取审核列表失败')
-  } finally {
-    loading.value = false
-  }
+  } catch (e) { showApiError(e, '获取审核列表失败') } finally { loading.value = false }
 }
 
-const applyFilters = () => {
-  currentPage.value = 1
-  fetchActivities()
-}
+const applyFilters = () => { currentPage.value = 1; fetchActivities() }
 const resetFilters = () => {
   filters.status = 'pending'
   filters.categoryId = ''
@@ -159,10 +150,7 @@ const resetFilters = () => {
   filters.startDateTo = ''
   applyFilters()
 }
-const goToPage = (page: number) => {
-  currentPage.value = page
-  fetchActivities()
-}
+const goToPage = (page: number) => { currentPage.value = page; fetchActivities() }
 const goToDetail = (id: number) => router.push(`/admin/audit/${id}`)
 
 onMounted(() => {

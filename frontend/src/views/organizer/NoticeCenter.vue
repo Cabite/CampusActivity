@@ -1,27 +1,58 @@
 <template>
   <div class="flex h-screen">
     <OrganizerSidebar />
+    <main class="flex-1 overflow-y-auto bg-blue-600 p-8">
+      <div class="max-w-7xl mx-auto">
+        <div class="mb-6">
+          <h1 class="text-3xl font-bold text-white">公告与消息中心</h1>
+          <p class="text-white/70 mt-1">系统公告和个人通知</p>
+        </div>
 
-    <main class="flex-1 overflow-y-auto bg-gradient-to-br from-blue-50 to-blue-100 p-6">
-      <AppPageContainer variant="gradient" padding="lg" max-width="2xl">
-        <div class="mb-6"><h1 class="text-3xl font-bold text-white">公告与消息中心</h1><p class="text-white/70 mt-1">系统公告和个人通知</p></div>
         <div class="flex gap-4 mb-6 border-b border-white/20">
           <button @click="activeTab = 'announcement'" class="pb-2 px-1 font-medium transition" :class="activeTab === 'announcement' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-white/70 hover:text-white'">系统公告</button>
           <button @click="activeTab = 'message'" class="pb-2 px-1 font-medium transition" :class="activeTab === 'message' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-white/70 hover:text-white'">我的消息 <span v-if="unreadCount > 0" class="ml-1 px-1.5 py-0.5 text-xs bg-red-500 text-white rounded-full">{{ unreadCount }}</span></button>
         </div>
+
         <div v-if="activeTab === 'announcement'">
           <AppCard :loading="loadingAnnouncement">
-            <div class="space-y-4"><div v-for="ann in announcements" :key="ann.id" class="border-b pb-3"><h3 class="font-semibold text-gray-900">{{ ann.title }}</h3><p class="text-xs text-gray-400 mt-1">{{ ann.start_time }}</p><p class="text-sm text-gray-600 mt-1">{{ ann.content }}</p></div><div v-if="announcements.length === 0 && !loadingAnnouncement" class="text-center text-gray-400 py-8">暂无公告</div></div>
-            <div v-if="announcementTotalPages > 1" class="flex justify-center mt-6 gap-2"><button v-for="p in announcementTotalPages" :key="p" @click="goToAnnouncementPage(p)" class="px-3 py-1 rounded border" :class="p === announcementPage ? 'bg-blue-600 text-white' : 'text-gray-700'">{{ p }}</button></div>
+            <div class="space-y-4">
+              <div v-for="ann in announcements" :key="ann.announcement_id" class="border-b pb-3">
+                <h3 class="font-semibold text-gray-900">{{ ann.title }}</h3>
+                <p class="text-xs text-gray-400 mt-1">{{ ann.start_time ? ann.start_time.replace('T', ' ').slice(0, 19) : '-' }}</p>
+                <p class="text-sm text-gray-600 mt-1">{{ ann.content }}</p>
+              </div>
+              <div v-if="announcements.length === 0 && !loadingAnnouncement" class="text-center text-gray-400 py-8">暂无公告</div>
+            </div>
+            <div v-if="announcementTotalPages > 1" class="flex justify-center mt-6 gap-2">
+              <button v-for="p in announcementTotalPages" :key="p" @click="goToAnnouncementPage(p)" class="px-3 py-1 rounded border" :class="p === announcementPage ? 'bg-blue-600 text-white' : 'text-gray-700'">{{ p }}</button>
+            </div>
           </AppCard>
         </div>
+
         <div v-else>
           <AppCard :loading="loadingMessage">
-            <div class="space-y-3"><div v-for="msg in messages" :key="msg.id" class="p-3 rounded-lg border-l-4" :class="getMessageClass(msg)"><div class="flex justify-between items-start"><div><div class="font-semibold">{{ msg.title }}</div><div class="text-xs text-gray-400 mt-1">{{ msg.created_at }}</div><div class="text-sm mt-1">{{ msg.content }}</div></div><button v-if="!msg.is_read" @click="markAsRead(msg.id)" class="text-blue-500 text-xs hover:underline">标记已读</button></div></div><div v-if="messages.length === 0 && !loadingMessage" class="text-center text-gray-400 py-8">暂无消息</div></div>
-            <div class="flex justify-between items-center mt-4"><button v-if="unreadCount > 0" @click="markAllAsRead" class="text-sm text-blue-500 hover:underline">全部已读</button><div v-if="messageTotalPages > 1" class="flex justify-center gap-2"><button v-for="p in messageTotalPages" :key="p" @click="goToMessagePage(p)" class="px-3 py-1 rounded border" :class="p === messagePage ? 'bg-blue-600 text-white' : 'text-gray-700'">{{ p }}</button></div></div>
+            <div class="space-y-3">
+              <div v-for="msg in messages" :key="msg.notification_id" class="p-3 rounded-lg border-l-4" :class="getMessageClass(msg)">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <div class="font-semibold text-gray-900">{{ msg.title }}</div>
+                    <div class="text-xs text-gray-400 mt-1">{{ msg.created_at ? msg.created_at.replace('T', ' ').slice(0, 19) : '-' }}</div>
+                    <div class="text-sm text-gray-700 mt-1">{{ msg.content }}</div>
+                  </div>
+                  <button v-if="!msg.is_read" @click="markAsRead(msg.notification_id)" class="text-blue-500 text-xs hover:underline">标记已读</button>
+                </div>
+              </div>
+              <div v-if="messages.length === 0 && !loadingMessage" class="text-center text-gray-400 py-8">暂无消息</div>
+            </div>
+            <div class="flex justify-between items-center mt-4">
+              <button v-if="unreadCount > 0" @click="markAllAsRead" class="text-sm text-blue-500 hover:underline">全部已读</button>
+              <div v-if="messageTotalPages > 1" class="flex justify-center gap-2">
+                <button v-for="p in messageTotalPages" :key="p" @click="goToMessagePage(p)" class="px-3 py-1 rounded border" :class="p === messagePage ? 'bg-blue-600 text-white' : 'text-gray-700'">{{ p }}</button>
+              </div>
+            </div>
           </AppCard>
         </div>
-      </AppPageContainer>
+      </div>
     </main>
   </div>
 </template>
@@ -31,7 +62,6 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import AppPageContainer from '@/components/layout/AppPageContainer.vue'
 import AppCard from '@/components/common/AppCard.vue'
-// 修正导入路径：从 @/api/notifications 导入
 import { getNotifications, markNotificationRead, getAnnouncements } from '@/api/notifications'
 import { showApiError } from '@/api/request'
 import OrganizerSidebar from '@/components/layout/OrganizerSidebar.vue'
@@ -80,7 +110,7 @@ const fetchMessages = async () => {
 const markAsRead = async (id: number) => {
   try {
     await markNotificationRead(id)
-    const idx = messages.value.findIndex(m => m.id === id)
+    const idx = messages.value.findIndex(m => m.notification_id === id)
     if (idx !== -1) {
       messages.value[idx].is_read = true
       unreadCount.value = messages.value.filter(m => !m.is_read).length

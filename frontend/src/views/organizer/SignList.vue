@@ -1,9 +1,8 @@
 <template>
   <div class="flex h-screen">
     <OrganizerSidebar />
-
-    <main class="flex-1 overflow-y-auto bg-gradient-to-br from-blue-50 to-blue-100 p-6">
-      <AppPageContainer variant="gradient" padding="lg" max-width="2xl">
+    <main class="flex-1 overflow-y-auto bg-blue-600 p-8">
+      <div class="max-w-7xl mx-auto">
         <div class="mb-4">
           <AppButton variant="link" @click="goBack" class="text-white">
             <iconify-icon icon="ph:arrow-left-bold"></iconify-icon> 返回
@@ -12,7 +11,7 @@
 
         <AppCard :loading="loading">
           <div class="flex justify-between items-center mb-4">
-            <h2 class="text-xl font-bold">签到管理 - 活动ID: {{ activityId }}</h2>
+            <h2 class="text-xl font-bold text-gray-800">签到管理 - 活动ID: {{ activityId }}</h2>
             <AppButton variant="blue" @click="openManualSignModal">手动签到</AppButton>
           </div>
           <div class="bg-gray-50 rounded-lg p-4 mb-6 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
@@ -31,17 +30,17 @@
               </thead>
               <tbody class="divide-y divide-gray-100">
                 <tr v-for="sign in signRecords" :key="sign.userId">
-                  <td class="px-6 py-4 text-sm">{{ sign.studentId }}</td>
-                  <td class="px-6 py-4 text-sm">{{ sign.college }}</td>
-                  <td class="px-6 py-4 text-sm">{{ sign.major }}</td>
-                  <td class="px-6 py-4 text-sm">{{ sign.grade }}</td>
-                  <td class="px-6 py-4 text-sm">
-                    <span v-if="sign.checkinTime" class="text-green-600">{{ sign.checkinTime }}</span>
+                  <td class="px-6 py-4 text-sm text-gray-900">{{ sign.studentId }}</td>
+                  <td class="px-6 py-4 text-sm text-gray-500">{{ sign.college }}</td>
+                  <td class="px-6 py-4 text-sm text-gray-500">{{ sign.major }}</td>
+                  <td class="px-6 py-4 text-sm text-gray-500">{{ sign.grade }}</td>
+                  <td class="px-6 py-4 text-sm text-gray-500">
+                    <span v-if="sign.checkinTime" class="text-green-600">{{ sign.checkinTime ? sign.checkinTime.replace('T', ' ').slice(0, 19) : '-' }}</span>
                     <span v-else class="text-gray-400">未签到</span>
                   </td>
                 </tr>
                 <tr v-if="!loading && signRecords.length === 0">
-                  <td colspan="5" class="text-center py-8 text-gray-400">暂无签到记录</td>
+                  <td colspan="5" class="text-center py-12 text-gray-400">暂无签到记录</td>
                 </tr>
               </tbody>
             </table>
@@ -51,7 +50,7 @@
         <AppDialog v-model:open="manualSignModalVisible" title="手动签到" confirm-text="确认签到" cancel-text="取消" @confirm="confirmManualSign">
           <input v-model="manualStudentId" placeholder="请输入学号" class="w-full border rounded px-3 py-2">
         </AppDialog>
-      </AppPageContainer>
+      </div>
     </main>
   </div>
 </template>

@@ -1,9 +1,8 @@
 <template>
   <div class="flex h-screen">
     <OrganizerSidebar />
-
-    <main class="flex-1 overflow-y-auto bg-gradient-to-br from-blue-50 to-blue-100 p-6">
-      <AppPageContainer variant="gradient" padding="lg" max-width="2xl">
+    <main class="flex-1 overflow-y-auto bg-blue-600 p-8">
+      <div class="max-w-7xl mx-auto">
         <div class="mb-4">
           <AppButton variant="link" @click="goBack" class="text-white">
             <iconify-icon icon="ph:arrow-left-bold"></iconify-icon> 返回
@@ -11,10 +10,13 @@
         </div>
 
         <AppCard :loading="loading">
-          <div class="flex items-center gap-4 mb-6"><h2 class="text-xl font-bold text-gray-800">报名管理 - 活动ID: {{ activityId }}</h2></div>
+          <div class="flex items-center gap-4 mb-6">
+            <h2 class="text-xl font-bold text-gray-800">报名管理 - 活动ID: {{ activityId }}</h2>
+          </div>
           <div class="bg-gray-50 rounded-lg p-4 mb-6 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
             <div>👥 报名人数：{{ totalRegistered }}</div>
           </div>
+
           <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
               <thead class="bg-gray-50">
@@ -29,17 +31,22 @@
               </thead>
               <tbody class="divide-y divide-gray-100">
                 <tr v-for="reg in registrations" :key="reg.id">
-                  <td class="px-6 py-4 text-sm">{{ reg.studentId }}</td>
-                  <td class="px-6 py-4 text-sm">{{ reg.college }}</td>
-                  <td class="px-6 py-4 text-sm">{{ reg.major }}</td>
-                  <td class="px-6 py-4 text-sm">{{ reg.grade }}</td>
-                  <td class="px-6 py-4 text-sm">{{ reg.registeredAt }}</td>
-                  <td class="px-6 py-4"><AppButton size="sm" variant="destructive" @click="openRejectModal(reg.id)">拒绝</AppButton></td>
+                  <td class="px-6 py-4 text-sm text-gray-900">{{ reg.studentId }}</td>
+                  <td class="px-6 py-4 text-sm text-gray-500">{{ reg.college }}</td>
+                  <td class="px-6 py-4 text-sm text-gray-500">{{ reg.major }}</td>
+                  <td class="px-6 py-4 text-sm text-gray-500">{{ reg.grade }}</td>
+                  <td class="px-6 py-4 text-sm text-gray-500">{{ reg.registeredAt }}</td>
+                  <td class="px-6 py-4">
+                    <AppButton size="sm" variant="destructive" @click="openRejectModal(reg.id)">拒绝</AppButton>
+                  </td>
                 </tr>
-                <tr v-if="!loading && registrations.length === 0"><td colspan="6" class="text-center py-8 text-gray-400">暂无报名记录</td></tr>
+                <tr v-if="!loading && registrations.length === 0">
+                  <td colspan="6" class="text-center py-12 text-gray-400">暂无报名记录</td>
+                </tr>
               </tbody>
             </table>
           </div>
+
           <div v-if="totalPages > 1" class="flex justify-center mt-6 gap-2">
             <button v-for="p in totalPages" :key="p" @click="goToPage(p)" class="px-3 py-1 rounded border" :class="p === currentPage ? 'bg-blue-600 text-white' : 'text-gray-700'">{{ p }}</button>
           </div>
@@ -48,7 +55,7 @@
         <AppDialog v-model:open="rejectModalVisible" title="拒绝报名" confirm-text="确认拒绝" cancel-text="取消" @confirm="confirmReject">
           <textarea v-model="rejectReason" rows="3" placeholder="请输入拒绝理由" class="w-full border rounded-lg px-3 py-2"></textarea>
         </AppDialog>
-      </AppPageContainer>
+      </div>
     </main>
   </div>
 </template>

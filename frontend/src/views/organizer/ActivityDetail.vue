@@ -1,32 +1,67 @@
 <template>
   <div class="flex h-screen">
-    <aside class="w-64 bg-white shadow-md flex flex-col z-10">
-      <div class="p-4 border-b"><h1 class="text-xl font-bold text-blue-600">CampusActivity</h1><p class="text-xs text-gray-500">组织者面板</p></div>
-      <nav class="flex-1 p-2 space-y-1">
-        <router-link to="/organizer/activities" class="flex items-center px-3 py-2 rounded-md hover:bg-gray-100" active-class="bg-blue-50 text-blue-600"><iconify-icon icon="ph:calendar-check" class="mr-2 w-5 h-5"></iconify-icon> 活动管理</router-link>
-        <router-link to="/organizer/notice" class="flex items-center px-3 py-2 rounded-md hover:bg-gray-100" active-class="bg-blue-50 text-blue-600"><iconify-icon icon="ph:bell" class="mr-2 w-5 h-5"></iconify-icon> 公告与消息</router-link>
-        <router-link to="/organizer/profile" class="flex items-center px-3 py-2 rounded-md hover:bg-gray-100" active-class="bg-blue-50 text-blue-600"><iconify-icon icon="ph:user-circle" class="mr-2 w-5 h-5"></iconify-icon> 个人中心</router-link>
-      </nav>
-      <div class="p-4 border-t text-sm text-gray-500"><p class="truncate">{{ userStore.userInfo?.org_name || '组织者' }}</p><button @click="logout" class="text-red-500 hover:text-red-700 mt-2 text-left">退出登录</button></div>
-    </aside>
+    <OrganizerSidebar />
+    <main class="flex-1 overflow-y-auto bg-blue-600 p-8">
+      <div class="max-w-7xl mx-auto">
+        <div class="mb-4">
+          <AppButton variant="link" @click="goBack" class="text-white">
+            <iconify-icon icon="ph:arrow-left-bold"></iconify-icon> 返回
+          </AppButton>
+        </div>
 
-    <main class="flex-1 overflow-y-auto bg-gradient-to-br from-blue-50 to-blue-100 p-6">
-      <AppPageContainer variant="gradient" padding="lg" max-width="2xl">
-        <div class="mb-4"><AppButton variant="link" @click="goBack" class="text-white"><iconify-icon icon="ph:arrow-left-bold"></iconify-icon> 返回</AppButton></div>
         <AppCard>
-          <div class="flex justify-between items-center mb-6"><h2 class="text-2xl font-bold">{{ isEdit ? '编辑活动' : '创建活动' }}</h2><span class="px-3 py-1 rounded-full text-sm" :class="statusColorClass(activityData.status)">{{ statusText(activityData.status) }}</span></div>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div><label class="block text-sm font-medium text-gray-700">活动名称</label><input type="text" v-model="formData.name" class="w-full border rounded px-3 py-2"></div>
-            <div><label class="block text-sm font-medium text-gray-700">分类</label><select v-model="formData.category_id" class="w-full border rounded px-3 py-2"><option v-for="cat in categoryOptions" :key="cat.value" :value="cat.value">{{ cat.label }}</option></select></div>
-            <div><label class="block text-sm font-medium text-gray-700">开始时间</label><input type="datetime-local" v-model="formData.start_time" class="w-full border rounded px-3 py-2"></div>
-            <div><label class="block text-sm font-medium text-gray-700">结束时间</label><input type="datetime-local" v-model="formData.end_time" class="w-full border rounded px-3 py-2"></div>
-            <div><label class="block text-sm font-medium text-gray-700">校区</label><input type="text" v-model="formData.campus" class="w-full border rounded px-3 py-2"></div>
-            <div><label class="block text-sm font-medium text-gray-700">地点</label><input type="text" v-model="formData.location" class="w-full border rounded px-3 py-2"></div>
-            <div><label class="block text-sm font-medium text-gray-700">人数上限</label><input type="number" v-model="formData.max_participants" class="w-full border rounded px-3 py-2"></div>
-            <div><label class="block text-sm font-medium text-gray-700">报名截止时间</label><input type="datetime-local" v-model="formData.registration_deadline" class="w-full border rounded px-3 py-2"></div>
-            <div><label class="block text-sm font-medium text-gray-700">取消报名截止时间</label><input type="datetime-local" v-model="formData.cancel_deadline" class="w-full border rounded px-3 py-2"></div>
-            <div class="col-span-2"><label class="block text-sm font-medium text-gray-700">活动简介</label><textarea v-model="formData.description" rows="3" class="w-full border rounded px-3 py-2"></textarea></div>
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-gray-800">{{ isEdit ? '编辑活动' : '创建活动' }}</h2>
+            <span class="px-3 py-1 rounded-full text-sm" :class="statusColorClass(activityData.status)">
+              {{ statusText(activityData.status) }}
+            </span>
           </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">活动名称</label>
+              <input type="text" v-model="formData.name" class="w-full border rounded-lg px-3 py-2">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">分类</label>
+              <select v-model="formData.category_id" class="w-full border rounded-lg px-3 py-2">
+                <option v-for="cat in categoryOptions" :key="cat.value" :value="cat.value">{{ cat.label }}</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">开始时间</label>
+              <input type="datetime-local" v-model="formData.start_time" class="w-full border rounded-lg px-3 py-2">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">结束时间</label>
+              <input type="datetime-local" v-model="formData.end_time" class="w-full border rounded-lg px-3 py-2">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">校区</label>
+              <input type="text" v-model="formData.campus" class="w-full border rounded-lg px-3 py-2">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">地点</label>
+              <input type="text" v-model="formData.location" class="w-full border rounded-lg px-3 py-2">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">人数上限</label>
+              <input type="number" v-model="formData.max_participants" class="w-full border rounded-lg px-3 py-2">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">报名截止时间</label>
+              <input type="datetime-local" v-model="formData.registration_deadline" class="w-full border rounded-lg px-3 py-2">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">取消报名截止时间</label>
+              <input type="datetime-local" v-model="formData.cancel_deadline" class="w-full border rounded-lg px-3 py-2">
+            </div>
+            <div class="col-span-2">
+              <label class="block text-sm font-medium text-gray-700 mb-1">活动简介</label>
+              <textarea v-model="formData.description" rows="3" class="w-full border rounded-lg px-3 py-2"></textarea>
+            </div>
+          </div>
+
           <div class="flex flex-wrap gap-3 pt-4 mt-4 border-t">
             <AppButton variant="blue" @click="handleSave" :disabled="!canSave">保存修改</AppButton>
             <AppButton variant="blue" @click="handleApplyReview" :disabled="!canApplyReview">申请审核</AppButton>
@@ -37,8 +72,14 @@
             <AppButton variant="destructive" @click="handleDelete" :disabled="!canDelete">删除活动</AppButton>
           </div>
         </AppCard>
-        <AppDialog v-model:open="qrDialogVisible" title="签到码" confirm-text="关闭" @confirm="qrDialogVisible = false"><div class="text-center py-4"><p class="text-2xl font-mono tracking-wider">{{ qrCode }}</p><p class="text-sm text-gray-500 mt-2">有效期至活动结束</p></div></AppDialog>
-      </AppPageContainer>
+
+        <AppDialog v-model:open="qrDialogVisible" title="签到码" confirm-text="关闭" @confirm="qrDialogVisible = false">
+          <div class="text-center py-4">
+            <p class="text-2xl font-mono tracking-wider">{{ qrCode }}</p>
+            <p class="text-sm text-gray-500 mt-2">有效期至活动结束</p>
+          </div>
+        </AppDialog>
+      </div>
     </main>
   </div>
 </template>
@@ -53,6 +94,7 @@ import AppDialog from '@/components/layout/AppDialog.vue'
 import { createActivity, updateActivity, deleteActivity, submitActivity, getActivityDetail, getCategories, getCheckinCode } from '@/api/organizer'
 import { useUserStore } from '@/stores/user'
 import { showApiError } from '@/api/request'
+import OrganizerSidebar from '@/components/layout/OrganizerSidebar.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -191,9 +233,6 @@ const generateQRCode = async () => {
   }
 }
 const goBack = () => router.back()
-const logout = () => {
-  if (confirm('确定退出登录吗？')) router.push('/login')
-}
 
 onMounted(() => {
   fetchCategories()
