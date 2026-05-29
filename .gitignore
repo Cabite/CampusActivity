@@ -28,6 +28,13 @@ coverage
 
 .eslintcache
 
+# Backend runtime files
+backend/instance/
+backend/*.db
+backend/app/static/avatars/
+backend/__pycache__/
+backend/app/**/__pycache__/
+
 # Cypress
 /cypress/videos/
 /cypress/screenshots/
