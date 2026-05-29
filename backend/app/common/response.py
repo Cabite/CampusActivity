@@ -1,17 +1,10 @@
 from flask import jsonify
 
 
-def success(data=None, message="success", code=200):
+def success(data=None, message='success', code=200):
+    """统一成功响应"""
     return jsonify({
-        "code": code,
-        "message": message,
-        "data": data,
-    })
-
-
-def fail(message, code=400, data=None):
-    return jsonify({
-        "code": code,
-        "message": message,
-        "data": data,
-    })
+        'code': code,
+        'message': message,
+        'data': data
+    }), code

@@ -1,29 +1,25 @@
-from sqlalchemy import asc, select
-
+from app.common.database import db_session
 from models import Category
+class CategoryService:
+    """分类服务"""
 
+    @staticmethod
+    def get_category_tree():
+        """获取分类树形结构"""
+        with db_session() as session:
+            categories = session.query(Category).order_by(Category.sort_order).all()
 
-def list_category_tree(session):
-    categories = session.execute(
-        select(Category).order_by(asc(Category.level), asc(Category.sort_order), asc(Category.id))
-    ).scalars().all()
+            # 构建树形结构
+            category_map = {c.id: {'id': c.id, 'name': c.name, 'level': c.level, 'sort_order': c.sort_order, 'children': []} for c in categories}
+            tree = []
 
-    roots = []
-    children_by_parent = {}
-    for category in categories:
-        item = {
-            "id": category.id,
-            "name": category.name,
-            "level": category.level,
-            "sort_order": category.sort_order,
-        }
-        if category.parent_id == 0:
-            item["children"] = []
-            roots.append(item)
-        else:
-            children_by_parent.setdefault(category.parent_id, []).append(item)
+            for c in categories:
+                node = category_map[c.id]
+                if c.parent_id == 0:
+                    tree.append(node)
+                else:
+                    parent = category_map.get(c.parent_id)
+                    if parent:
+                        parent['children'].append(node)
 
-    for root in roots:
-        root["children"] = children_by_parent.get(root["id"], [])
-
-    return roots
+            return tree

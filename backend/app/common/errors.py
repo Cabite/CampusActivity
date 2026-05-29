@@ -1,27 +1,30 @@
-from werkzeug.exceptions import HTTPException
+from flask import jsonify
+class BusinessError(Exception):
+    """业务异常"""
 
-from app.common.response import fail
-
-
-class ApiError(Exception):
-    def __init__(self, message, code=400, status_code=400, data=None):
-        super().__init__(message)
+    def __init__(self, message, code=400, status_code=None):
         self.message = message
         self.code = code
-        self.status_code = status_code
-        self.data = data
+        self.status_code = status_code or code
+
+    def to_response(self):
+        return jsonify({
+            'code': self.code,
+            'message': self.message,
+            'data': None
+        }), self.status_code
 
 
 def register_error_handlers(app):
-    @app.errorhandler(ApiError)
-    def handle_api_error(error):
-        return fail(error.message, code=error.code, data=error.data), error.status_code
+    """注册全局错误处理"""
+    @app.errorhandler(BusinessError)
+    def handle_business_error(e):
+        return e.to_response()
 
-    @app.errorhandler(HTTPException)
-    def handle_http_error(error):
-        return fail(error.description, code=error.code), error.code
+    @app.errorhandler(404)
+    def handle_not_found(e):
+        return jsonify({'code': 404, 'message': '资源不存在', 'data': None}), 404
 
-    @app.errorhandler(Exception)
-    def handle_unexpected_error(error):
-        app.logger.exception(error)
-        return fail("服务器内部错误", code=500), 500
+    @app.errorhandler(500)
+    def handle_server_error(e):
+        return jsonify({'code': 500, 'message': '服务器内部错误', 'data': None}), 500
