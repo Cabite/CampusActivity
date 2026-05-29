@@ -11,7 +11,7 @@ export function updateProfile(data: Partial<UserProfile>) {
 
 export function uploadAvatar(file: File) {
   const form = new FormData()
-  form.append('avatar', file)
+  form.append('avatarFile', file)
   return apiUpload<{ avatar_url: string }>('/user/avatar', form)
 }
 

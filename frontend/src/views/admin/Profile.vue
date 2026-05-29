@@ -11,10 +11,21 @@
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden max-w-3xl mx-auto">
           <div class="flex flex-col items-center py-8 px-6 border-b border-gray-100 bg-gray-50">
             <div class="relative">
-              <img :src="avatar" class="w-28 h-28 rounded-full border-4 border-blue-100 object-cover" />
-              <button @click="openAvatarModal" class="absolute bottom-0 right-0 bg-white rounded-full p-1 shadow-md hover:bg-gray-100">
-                <iconify-icon icon="ph:pencil-simple" class="text-gray-500 text-sm"></iconify-icon>
-              </button>
+              <img
+                :src="avatar || defaultAvatar"
+                class="w-28 h-28 rounded-full border-4 border-blue-100 object-cover"
+                @error="handleImageError"
+              />
+              <label class="absolute bottom-0 right-0 bg-white rounded-full p-1 shadow-md cursor-pointer hover:bg-gray-100">
+                <Pencil class="h-4 w-4 text-gray-500" />
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png"
+                  class="hidden"
+                  @change="handleAvatarChange"
+                  :disabled="uploadingAvatar"
+                />
+              </label>
             </div>
             <h2 class="text-2xl font-bold mt-3 text-gray-800">{{ username }}</h2>
             <p class="text-gray-500">{{ role === 'super_admin' ? '超级管理员' : '管理员' }}</p>
@@ -47,25 +58,20 @@
             <input type="password" v-model="confirmPassword" placeholder="确认新密码" class="w-full border rounded px-3 py-2">
           </div>
         </AppDialog>
-
-        <AppDialog v-model:open="avatarModalVisible" title="修改头像" confirm-text="保存" cancel-text="取消" @confirm="updateAvatar">
-          <input type="text" v-model="avatarUrl" placeholder="输入头像图片URL" class="w-full border rounded px-3 py-2">
-        </AppDialog>
       </div>
     </main>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { Pencil } from 'lucide-vue-next'
 import AdminSidebar from '@/components/layout/AdminSidebar.vue'
-import AppPageContainer from '@/components/layout/AppPageContainer.vue'
-import AppCard from '@/components/common/AppCard.vue'
 import AppButton from '@/components/common/AppButton.vue'
 import AppDialog from '@/components/layout/AppDialog.vue'
-import { getProfile, updateProfile, uploadAvatar, resetPassword, deleteAccount } from '@/api/user'
-import { logout } from '@/api/auth'
+import { getProfile, uploadAvatar, resetPassword, deleteAccount } from '@/api/user'
+import { login, logout } from '@/api/auth'
 import { showApiError } from '@/api/request'
 
 const router = useRouter()
@@ -73,14 +79,19 @@ const username = ref('')
 const email = ref('')
 const avatar = ref('')
 const role = ref('')
+const uploadingAvatar = ref(false)
+
+// 默认头像：基于用户名生成，保证唯一性
+const defaultAvatar = computed(() => {
+  const seed = username.value || 'admin'
+  return `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`
+})
 
 const pwdModalVisible = ref(false)
 const oldPassword = ref('')
 const newPassword = ref('')
 const confirmPassword = ref('')
-
-const avatarModalVisible = ref(false)
-const avatarUrl = ref('')
+const changingPassword = ref(false)
 
 const fetchProfile = async () => {
   try {
@@ -94,6 +105,50 @@ const fetchProfile = async () => {
   }
 }
 
+// 头像上传（关键修改：去掉 fetchProfile，直接使用返回的 URL）
+const handleAvatarChange = async (event: Event) => {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+
+  if (!['image/jpeg', 'image/png'].includes(file.type)) {
+    alert('仅支持 JPG 或 PNG 格式')
+    return
+  }
+  if (file.size > 2 * 1024 * 1024) {
+    alert('图片大小不能超过 2MB')
+    return
+  }
+
+  uploadingAvatar.value = true
+  try {
+    const res = await uploadAvatar(file)
+    // 直接使用接口返回的新头像 URL，不重新拉取个人信息（避免被旧数据覆盖）
+    avatar.value = res.avatar_url
+    alert('头像更新成功')
+  } catch (e: any) {
+    const msg = e.response?.data?.message || e.message || '上传失败'
+    alert(msg)
+  } finally {
+    uploadingAvatar.value = false
+    if (input) input.value = ''
+  }
+}
+
+// 图片加载失败时回退到默认头像
+const handleImageError = (e: Event) => {
+  const img = e.target as HTMLImageElement
+  img.src = defaultAvatar.value
+}
+
+// 修改密码（保持不变）
+const openPwdModal = () => {
+  oldPassword.value = ''
+  newPassword.value = ''
+  confirmPassword.value = ''
+  pwdModalVisible.value = true
+}
+
 const changePassword = async () => {
   if (!oldPassword.value || !newPassword.value || !confirmPassword.value) {
     alert('请填写完整')
@@ -103,35 +158,34 @@ const changePassword = async () => {
     alert('新密码与确认密码不一致')
     return
   }
-  alert('密码修改成功，请重新登录')
-  pwdModalVisible.value = false
-  handleLogout()
-}
-
-const updateAvatar = async () => {
-  if (!avatarUrl.value.trim()) {
-    alert('请输入图片URL')
+  if (newPassword.value.length < 6 || newPassword.value.length > 20) {
+    alert('新密码长度需为 6-20 位')
     return
   }
+
+  changingPassword.value = true
   try {
-    avatar.value = avatarUrl.value
-    alert('头像已更新')
-    avatarModalVisible.value = false
-  } catch (e) {
-    showApiError(e, '更新失败')
+    const loginRes = await login({ role: 'admin', account: email.value, password: oldPassword.value })
+    const token = loginRes.token
+
+    await resetPassword({
+      token: token,
+      new_password: newPassword.value,
+      confirm_password: confirmPassword.value
+    })
+
+    alert('密码修改成功，请重新登录')
+    pwdModalVisible.value = false
+    await logout()
+    router.push('/login')
+  } catch (e: any) {
+    const msg = e.response?.data?.message || e.message || '修改失败，请检查旧密码是否正确'
+    alert(msg)
+  } finally {
+    changingPassword.value = false
   }
 }
 
-const openPwdModal = () => {
-  oldPassword.value = ''
-  newPassword.value = ''
-  confirmPassword.value = ''
-  pwdModalVisible.value = true
-}
-const openAvatarModal = () => {
-  avatarUrl.value = avatar.value
-  avatarModalVisible.value = true
-}
 const handleLogout = async () => {
   if (confirm('确定要退出登录吗？')) {
     try {
@@ -140,6 +194,7 @@ const handleLogout = async () => {
     router.push('/login')
   }
 }
+
 const handleDeleteAccount = async () => {
   if (confirm('注销账号后将无法恢复，所有数据将被清除。确定注销吗？')) {
     try {

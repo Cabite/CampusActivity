@@ -28,10 +28,7 @@
             <label class="block text-xs font-medium text-gray-600 mb-1">开始时间(起)</label>
             <input type="date" v-model="filters.startDateFrom" class="border rounded-lg px-3 py-2 text-sm w-36 text-gray-900">
           </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-600 mb-1">开始时间(止)</label>
-            <input type="date" v-model="filters.startDateTo" class="border rounded-lg px-3 py-2 text-sm w-36 text-gray-900">
-          </div>
+          <!-- 已移除“开始时间(止)”输入框 -->
           <div class="flex gap-3">
             <button @click="applyFilters" class="px-5 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium shadow-sm hover:bg-blue-700">筛选</button>
             <button @click="resetFilters" class="px-5 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">重置</button>
@@ -77,13 +74,9 @@
 </template>
 
 <script setup lang="ts">
-// 保持原有所有脚本逻辑不变，此处仅列出必要的导入和变量，实际请保留您原来的完整脚本
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import AdminSidebar from '@/components/layout/AdminSidebar.vue'
-import AppPageContainer from '@/components/layout/AppPageContainer.vue'
-import AppCard from '@/components/common/AppCard.vue'
-import AppButton from '@/components/common/AppButton.vue'
 import { getAdminActivities, getCategories } from '@/api/admin'
 import { showApiError } from '@/api/request'
 
@@ -98,16 +91,16 @@ const filters = reactive({
   status: 'pending',
   categoryId: '',
   startDateFrom: '',
-  startDateTo: ''
+  // startDateTo 已移除
 })
 
 const statusText = (status: string) => {
-  const map: Record<string, string> = { pending: '待审核', approved: '已通过', rejected: '已拒绝' }
+  const map: Record<string, string> = { pending: '待审核', approved: '已通过', rejected: '已拒绝', removed: '已下架' }
   return map[status] || status
 }
 const statusColorClass = (status: string) => {
-  const map: Record<string, string> = { pending: 'bg-yellow-100 text-yellow-700', approved: 'bg-green-100 text-green-700', rejected: 'bg-red-100 text-red-700' }
-  return map[status] || 'bg-gray-100 text-gray-700'
+  const map: Record<string, string> = { pending: 'bg-yellow-100 text-yellow-700', approved: 'bg-green-100 text-green-700', rejected: 'bg-red-100 text-red-700', removed: 'bg-gray-100 text-gray-700' }
+  return map[status] || 'bg-gray-100'
 }
 
 const fetchCategories = async () => {
@@ -134,11 +127,12 @@ const fetchActivities = async () => {
       status: statusParam || undefined,
       category_id: filters.categoryId ? Number(filters.categoryId) : undefined,
       start_date: filters.startDateFrom || undefined,
-      end_date: filters.startDateTo || undefined
+      // 不再传递 end_date
     }
     const data = await getAdminActivities(params)
-    activities.value = data.items
-    totalPages.value = Math.ceil(data.total / pageSize)
+    activities.value = data.items || []
+    const total = data.total || activities.value.length
+    totalPages.value = Math.ceil(total / pageSize)
   } catch (e) { showApiError(e, '获取审核列表失败') } finally { loading.value = false }
 }
 
@@ -147,7 +141,7 @@ const resetFilters = () => {
   filters.status = 'pending'
   filters.categoryId = ''
   filters.startDateFrom = ''
-  filters.startDateTo = ''
+  // 无需重置 endDate
   applyFilters()
 }
 const goToPage = (page: number) => { currentPage.value = page; fetchActivities() }

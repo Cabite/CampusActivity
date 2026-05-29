@@ -11,10 +11,20 @@
         <AppCard>
           <div class="flex flex-col items-center py-6 border-b border-gray-100">
             <div class="relative">
-              <img :src="avatarUrl" class="w-28 h-28 rounded-full border-4 border-blue-100 object-cover" />
-              <button @click="openAvatarUpload" class="absolute bottom-0 right-0 bg-white rounded-full p-1 shadow-md">
-                <iconify-icon icon="ph:pencil-simple" class="text-gray-500 text-sm"></iconify-icon>
-              </button>
+              <img
+                :src="avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${formData.org_name || 'default'}`"
+                class="w-28 h-28 rounded-full border-4 border-blue-100 object-cover"
+              />
+              <label class="absolute bottom-0 right-0 bg-white rounded-full p-1 shadow-md cursor-pointer">
+                <Pencil class="h-4 w-4 text-gray-500" />
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png"
+                  class="hidden"
+                  @change="handleAvatarChange"
+                  :disabled="uploadingAvatar"
+                />
+              </label>
             </div>
             <h2 class="text-2xl font-bold mt-3 text-gray-800">{{ formData.org_name }}</h2>
             <p class="text-gray-500">组织者</p>
@@ -52,12 +62,6 @@
             <input type="password" v-model="confirmPassword" placeholder="确认新密码" class="w-full border rounded px-3 py-2">
           </div>
         </AppDialog>
-
-        <AppDialog v-model:open="avatarModalVisible" title="修改头像" confirm-text="保存" cancel-text="取消" @confirm="uploadAvatarHandler">
-          <input type="file" ref="avatarInput" accept="image/*" class="hidden" @change="onAvatarSelected">
-          <AppButton variant="outline" @click="triggerFileInput" class="w-full">选择图片</AppButton>
-          <img v-if="avatarPreview" :src="avatarPreview" class="mt-3 w-32 h-32 rounded-full mx-auto object-cover">
-        </AppDialog>
       </div>
     </main>
   </div>
@@ -66,16 +70,18 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import AppPageContainer from '@/components/layout/AppPageContainer.vue'
+import { Pencil } from 'lucide-vue-next'
 import AppCard from '@/components/common/AppCard.vue'
 import AppButton from '@/components/common/AppButton.vue'
 import AppDialog from '@/components/layout/AppDialog.vue'
-import { getProfile, updateProfile, uploadAvatar } from '@/api/user'
-import { showApiError } from '@/api/request'
 import OrganizerSidebar from '@/components/layout/OrganizerSidebar.vue'
+import { getProfile, uploadAvatar, resetPassword, deleteAccount } from '@/api/user'
+import { login, logout } from '@/api/auth'
+import { showApiError } from '@/api/request'
 
 const router = useRouter()
 
+// 个人信息
 const formData = reactive({
   org_name: '',
   email: '',
@@ -83,7 +89,9 @@ const formData = reactive({
 })
 const profileStatus = ref('approved')
 const avatarUrl = ref('')
+const uploadingAvatar = ref(false)
 
+// 获取个人资料
 const fetchProfile = async () => {
   try {
     const data = await getProfile() as any
@@ -97,49 +105,49 @@ const fetchProfile = async () => {
   }
 }
 
-const avatarModalVisible = ref(false)
-const avatarInput = ref<HTMLInputElement>()
-const avatarPreview = ref('')
-const selectedFile = ref<File | null>(null)
-
-const openAvatarUpload = () => {
-  avatarModalVisible.value = true
-  avatarPreview.value = ''
-  selectedFile.value = null
-}
-const triggerFileInput = () => avatarInput.value?.click()
-const onAvatarSelected = (event: Event) => {
+// 头像上传（与普通用户完全一致，不再重新拉取个人信息）
+const handleAvatarChange = async (event: Event) => {
   const input = event.target as HTMLInputElement
-  if (input.files && input.files[0]) {
-    selectedFile.value = input.files[0]
-    avatarPreview.value = URL.createObjectURL(selectedFile.value)
-  }
-}
-const uploadAvatarHandler = async () => {
-  if (!selectedFile.value) {
-    alert('请选择图片')
+  const file = input.files?.[0]
+  if (!file) return
+
+  if (!['image/jpeg', 'image/png'].includes(file.type)) {
+    alert('仅支持 JPG 或 PNG 格式')
     return
   }
+  if (file.size > 2 * 1024 * 1024) {
+    alert('图片大小不能超过 2MB')
+    return
+  }
+
+  uploadingAvatar.value = true
   try {
-    const res = await uploadAvatar(selectedFile.value)
-    avatarUrl.value = res.avatar_url
+    const res = await uploadAvatar(file)
+    avatarUrl.value = res.avatar_url  // 直接使用返回的新URL
     alert('头像更新成功')
-    avatarModalVisible.value = false
-  } catch (e) {
-    showApiError(e, '上传失败')
+  } catch (e: any) {
+    const msg = e.response?.data?.message || e.message || '上传失败'
+    alert(msg)
+  } finally {
+    uploadingAvatar.value = false
+    if (input) input.value = ''  // 清空 input，允许重复上传同一文件
   }
 }
 
+// 修改密码
 const pwdModalVisible = ref(false)
 const oldPassword = ref('')
 const newPassword = ref('')
 const confirmPassword = ref('')
+const changingPassword = ref(false)
+
 const openChangePasswordModal = () => {
   oldPassword.value = ''
   newPassword.value = ''
   confirmPassword.value = ''
   pwdModalVisible.value = true
 }
+
 const changePassword = async () => {
   if (!oldPassword.value || !newPassword.value || !confirmPassword.value) {
     alert('请填写完整')
@@ -149,19 +157,64 @@ const changePassword = async () => {
     alert('新密码与确认密码不一致')
     return
   }
-  alert('密码修改成功，请重新登录')
-  pwdModalVisible.value = false
-  handleLogout()
+  if (newPassword.value.length < 6 || newPassword.value.length > 20) {
+    alert('新密码长度需为 6-20 位')
+    return
+  }
+
+  changingPassword.value = true
+  try {
+    // 使用邮箱和旧密码登录获取 token
+    const loginRes = await login({ role: 'organizer', account: formData.email, password: oldPassword.value })
+    const token = loginRes.token
+
+    await resetPassword({
+      token: token,
+      new_password: newPassword.value,
+      confirm_password: confirmPassword.value
+    })
+
+    alert('密码修改成功，请重新登录')
+    pwdModalVisible.value = false
+    await logout()
+    router.push('/login')
+  } catch (e: any) {
+    const msg = e.response?.data?.message || e.message || '修改失败，请检查旧密码是否正确'
+    alert(msg)
+  } finally {
+    changingPassword.value = false
+  }
 }
 
-const handleLogout = () => {
-  if (confirm('确定退出登录吗？')) router.push('/login')
+// 退出登录
+const handleLogout = async () => {
+  if (confirm('确定退出登录吗？')) {
+    try {
+      await logout()
+    } catch {}
+    router.push('/login')
+  }
 }
-const handleDeleteAccount = () => {
-  if (confirm('注销账号后将无法恢复，所有数据将被清除。确定注销吗？')) router.push('/login')
+
+// 注销账号
+const handleDeleteAccount = async () => {
+  if (confirm('注销账号后将无法恢复，所有数据将被清除。确定注销吗？')) {
+    try {
+      await deleteAccount()
+      alert('账号已注销')
+      router.push('/login')
+    } catch (e) {
+      showApiError(e, '注销失败')
+    }
+  }
 }
+
 const statusText = (status: string) => {
-  const map: Record<string, string> = { pending: '审核中', approved: '已认证', rejected: '审核未通过' }
+  const map: Record<string, string> = { 
+    pending: '审核中', 
+    approved: '已认证', 
+    rejected: '审核未通过' 
+  }
   return map[status] || status
 }
 

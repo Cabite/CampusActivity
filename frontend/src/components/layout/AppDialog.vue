@@ -14,36 +14,21 @@ import { cn } from '@/utils'
 import AppButton from '../common/AppButton.vue'
 
 interface Props {
-  // 控制显示
   open?: boolean
   defaultOpen?: boolean
-  
-  // 内容配置
   title?: string
   description?: string
-  
-  // 按钮配置
   confirmText?: string
   cancelText?: string
   showCancel?: boolean
   showConfirm?: boolean
-  
-  // 按钮变体
   confirmVariant?: 'default' | 'destructive' | 'outline' | 'ghost' | 'link' | 'blue'
   cancelVariant?: 'default' | 'destructive' | 'outline' | 'ghost' | 'link' | 'blue'
-  
-  // 加载状态
   confirmLoading?: boolean
-  
-  // 大小
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'full'
-  
-  // 样式
   centered?: boolean
   closeOnClickOutside?: boolean
   closeOnEscape?: boolean
-  
-  // 自定义类名
   class?: string
   contentClass?: string
 }
@@ -73,12 +58,10 @@ const emit = defineEmits<{
   'close': []
 }>()
 
-// 内部状态
 const internalOpen = ref(props.defaultOpen)
 
-// 计算实际打开状态
 const actualOpen = computed({
-  get: () => props.open !== undefined ? props.open : internalOpen.value,
+  get: () => (props.open !== undefined ? props.open : internalOpen.value),
   set: (value: boolean) => {
     if (props.open !== undefined) {
       emit('update:open', value)
@@ -88,27 +71,24 @@ const actualOpen = computed({
     if (!value) {
       emit('close')
     }
-  }
+  },
 })
 
-// 尺寸类
 const sizeClass = computed(() => {
   const map = {
     sm: 'sm:max-w-md',
     md: 'sm:max-w-lg',
     lg: 'sm:max-w-2xl',
     xl: 'sm:max-w-4xl',
-    full: 'sm:max-w-[90vw] sm:max-h-[90vh]'
+    full: 'sm:max-w-[90vw] sm:max-h-[90vh]',
   }
   return map[props.size]
 })
 
-// 位置类
 const positionClass = computed(() => {
   return props.centered ? 'sm:my-auto' : ''
 })
 
-// 处理确认
 const handleConfirm = () => {
   emit('confirm')
   if (props.open === undefined && !props.confirmLoading) {
@@ -116,7 +96,6 @@ const handleConfirm = () => {
   }
 }
 
-// 处理取消
 const handleCancel = () => {
   emit('cancel')
   if (props.open === undefined) {
@@ -124,28 +103,25 @@ const handleCancel = () => {
   }
 }
 
-// 处理关闭
 const handleClose = () => {
   if (props.closeOnClickOutside) {
     actualOpen.value = false
   }
 }
 
-// 监听 ESC 键
-watch(() => actualOpen.value, (newVal) => {
-  if (!newVal) {
+watch(
+  () => actualOpen.value,
+  () => {
     // 弹窗关闭时的额外处理
-  }
-})
+  },
+)
 
-// 全局 ESC 监听
 const onEscape = () => {
   if (props.closeOnEscape && actualOpen.value) {
     actualOpen.value = false
   }
 }
 
-// 添加 ESC 监听
 if (typeof window !== 'undefined') {
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') onEscape()
@@ -154,32 +130,37 @@ if (typeof window !== 'undefined') {
 </script>
 
 <template>
-  <Dialog 
-    v-model:open="actualOpen"
-    :modal="true"
-  >
+  <Dialog v-model:open="actualOpen" :modal="true">
     <DialogTrigger v-if="$slots.trigger" as-child>
       <slot name="trigger" />
     </DialogTrigger>
 
-    <DialogContent 
+    <DialogContent
       :class="cn(
         'p-0 gap-0 overflow-hidden',
         sizeClass,
         positionClass,
-        contentClass
+        contentClass,
       )"
       :close-on-click-outside="closeOnClickOutside"
       :close-on-escape="closeOnEscape"
       @close="handleClose"
     >
+      <!-- 始终提供一个隐藏的描述以满足无障碍要求（如果没有显式描述） -->
+      <DialogDescription v-if="!description && !$slots.header" class="sr-only">
+        {{ title || '对话框' }}
+      </DialogDescription>
+
       <!-- 头部 -->
-      <div v-if="title || description || $slots.header" class="border-b border-border p-6 pb-4">
+      <div
+        v-if="title || description || $slots.header"
+        class="border-b border-border p-6 pb-4"
+      >
         <DialogHeader>
           <DialogTitle v-if="title" class="text-xl font-semibold">
             {{ title }}
           </DialogTitle>
-          <DialogDescription v-if="description" class="text-sm text-muted-foreground mt-1">
+          <DialogDescription v-if="description" class="mt-1 text-sm text-muted-foreground">
             {{ description }}
           </DialogDescription>
           <slot v-else-if="$slots.header" name="header" />
@@ -192,12 +173,18 @@ if (typeof window !== 'undefined') {
       </div>
 
       <!-- 底部按钮 -->
-      <div v-if="showConfirm || showCancel || $slots.footer" class="border-t border-border p-6 pt-4">
+      <div
+        v-if="showConfirm || showCancel || $slots.footer"
+        class="border-t border-border p-6 pt-4"
+      >
         <DialogFooter>
           <div v-if="$slots.footer">
             <slot name="footer" />
           </div>
-          <div v-else class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+          <div
+            v-else
+            class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"
+          >
             <AppButton
               v-if="showCancel"
               :variant="cancelVariant"
