@@ -87,18 +87,27 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import AppPageContainer from '@/components/layout/AppPageContainer.vue'
 import AppCard from '@/components/common/AppCard.vue'
 import AppButton from '@/components/common/AppButton.vue'
 import AppDialog from '@/components/layout/AppDialog.vue'
 import { createActivity, updateActivity, deleteActivity, submitActivity, getActivityDetail, getCategories, getCheckinCode } from '@/api/organizer'
-import { useUserStore } from '@/stores/user'
 import { showApiError } from '@/api/request'
 import OrganizerSidebar from '@/components/layout/OrganizerSidebar.vue'
 
+// 辅助函数：将后端时间格式（YYYY-MM-DD HH:MM:SS）转换为 datetime-local 格式（YYYY-MM-DDTHH:MM）
+const toDatetimeLocal = (dateStr: string): string => {
+  if (!dateStr) return ''
+  return dateStr.replace(' ', 'T').slice(0, 16)
+}
+
+// 辅助函数：将 datetime-local 格式（YYYY-MM-DDTHH:MM）转换为后端格式（YYYY-MM-DD HH:MM:00）
+const toBackendDateTime = (localStr: string): string => {
+  if (!localStr) return ''
+  return localStr.replace('T', ' ') + ':00'
+}
+
 const router = useRouter()
 const route = useRoute()
-const userStore = useUserStore()
 const activityId = route.query.id ? Number(route.query.id) : null
 const isEdit = !!activityId
 
@@ -122,7 +131,10 @@ const activityData = reactive({
 const categoryOptions = ref<{ value: number; label: string }[]>([])
 
 const canSave = computed(() => true)
-const canApplyReview = computed(() => activityData.status === 'draft' || activityData.status === 'rejected')
+// 允许提交审核的状态：草稿、被拒绝、修改待审核
+const canApplyReview = computed(() => 
+  ['draft', 'rejected', 'edit_pending'].includes(activityData.status)
+)
 const canDelete = computed(() => !['ended', 'removed'].includes(activityData.status))
 
 const statusText = (s: string) => {
@@ -169,13 +181,14 @@ const fetchActivityDetail = async () => {
     activityData.current_participants = data.current_participants
     formData.name = data.name
     formData.category_id = data.category_id
-    formData.start_time = data.start_time.replace(' ', 'T')
-    formData.end_time = data.end_time.replace(' ', 'T')
+    // 转换时间格式
+    formData.start_time = toDatetimeLocal(data.start_time)
+    formData.end_time = toDatetimeLocal(data.end_time)
     formData.campus = data.campus
     formData.location = data.location
     formData.max_participants = data.max_participants
-    formData.registration_deadline = data.registration_deadline.replace(' ', 'T')
-    formData.cancel_deadline = data.cancel_deadline.replace(' ', 'T')
+    formData.registration_deadline = toDatetimeLocal(data.registration_deadline)
+    formData.cancel_deadline = toDatetimeLocal(data.cancel_deadline)
     formData.description = data.description
   } catch (e) {
     showApiError(e, '获取活动详情失败')
@@ -185,28 +198,52 @@ const fetchActivityDetail = async () => {
 const handleSave = async () => {
   if (!formData.name) { alert('请填写活动名称'); return }
   if (!formData.category_id) { alert('请选择分类'); return }
-  const payload = { ...formData, category_id: formData.category_id, save_as_draft: true }
+
+  const payload = {
+    name: formData.name,
+    category_id: formData.category_id,
+    start_time: toBackendDateTime(formData.start_time),
+    end_time: toBackendDateTime(formData.end_time),
+    campus: formData.campus,
+    location: formData.location,
+    max_participants: formData.max_participants,
+    registration_deadline: toBackendDateTime(formData.registration_deadline),
+    cancel_deadline: toBackendDateTime(formData.cancel_deadline),
+    description: formData.description,
+    save_as_draft: true  // 保存为草稿
+  }
+
   try {
     if (isEdit) {
       await updateActivity(activityId!, payload)
       alert('保存成功')
+      // 关键：保存后重新获取详情，刷新状态（尤其是 status）
+      await fetchActivityDetail()
     } else {
       const data = await createActivity(payload)
       router.push(`/organizer/activity?id=${data.activity_id}`)
     }
-  } catch (e) {
-    showApiError(e, isEdit ? '保存失败' : '创建失败')
+  } catch (e: any) {
+    if (e.response?.status === 405) {
+      alert('活动状态不允许修改（可能已开始或已结束）')
+    } else {
+      showApiError(e, isEdit ? '保存失败' : '创建失败')
+    }
   }
 }
+
 const handleApplyReview = async () => {
   if (!isEdit) return
   try {
     await submitActivity(activityId!)
     alert('已提交审核')
+    // 提交后重新获取状态，更新按钮状态
+    await fetchActivityDetail()
   } catch (e) {
     showApiError(e, '提交审核失败')
   }
 }
+
 const handleDelete = async () => {
   if (!confirm('确定删除该活动吗？')) return
   try {
@@ -217,6 +254,7 @@ const handleDelete = async () => {
     showApiError(e, '删除失败')
   }
 }
+
 const goToRegistrations = () => router.push(`/organizer/registrations?activityId=${activityId}`)
 const goToSignRecords = () => router.push(`/organizer/signs?activityId=${activityId}`)
 const goToStats = () => router.push(`/organizer/stats?activityId=${activityId}`)

@@ -18,7 +18,7 @@
               <div class="flex justify-between items-start">
                 <div>
                   <h3 class="font-semibold text-gray-900">{{ ann.title }}</h3>
-                  <p class="text-xs text-gray-400 mt-1">{{ ann.start_time ? ann.start_time.replace('T', ' ').slice(0, 19) : '-' }}</p>
+                  <p class="text-xs text-gray-400 mt-1">{{ ann.start_time ? formatDateTime(ann.start_time) : '-' }}</p>
                   <p class="text-sm text-gray-600 mt-1">{{ ann.content }}</p>
                 </div>
                 <div class="flex gap-2">
@@ -38,8 +38,8 @@
           <div class="space-y-3">
             <input type="text" v-model="form.title" placeholder="标题" class="w-full border rounded px-3 py-2">
             <textarea v-model="form.content" rows="4" placeholder="内容" class="w-full border rounded px-3 py-2"></textarea>
-            <input type="datetime-local" v-model="form.start_time" placeholder="开始时间（可选）" class="w-full border rounded px-3 py-2">
-            <input type="datetime-local" v-model="form.end_time" placeholder="结束时间（可选）" class="w-full border rounded px-3 py-2">
+            <input type="datetime-local" v-model="form.start_time_local" placeholder="开始时间（可选）" class="w-full border rounded px-3 py-2">
+            <input type="datetime-local" v-model="form.end_time_local" placeholder="结束时间（可选）" class="w-full border rounded px-3 py-2">
           </div>
         </AppDialog>
       </div>
@@ -49,16 +49,13 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import AdminSidebar from '@/components/layout/AdminSidebar.vue'
-import AppPageContainer from '@/components/layout/AppPageContainer.vue'
 import AppCard from '@/components/common/AppCard.vue'
 import AppButton from '@/components/common/AppButton.vue'
 import AppDialog from '@/components/layout/AppDialog.vue'
 import { getAnnouncements, publishAnnouncement, removeAnnouncement as apiRemoveAnnouncement } from '@/api/admin'
 import { showApiError } from '@/api/request'
 
-const router = useRouter()
 const loading = ref(false)
 const announcements = ref<any[]>([])
 const currentPage = ref(1)
@@ -69,8 +66,9 @@ const fetchAnnouncements = async () => {
   loading.value = true
   try {
     const data = await getAnnouncements()
-    announcements.value = data
-    totalPages.value = Math.ceil(data.length / pageSize)
+    // 后端直接返回数组，不需要兼容处理
+    announcements.value = Array.isArray(data) ? data : []
+    totalPages.value = Math.ceil(announcements.value.length / pageSize)
   } catch (e) {
     showApiError(e, '获取公告列表失败')
   } finally {
@@ -81,48 +79,85 @@ const fetchAnnouncements = async () => {
 const modalVisible = ref(false)
 const modalTitle = ref('发布公告')
 const editingId = ref<number | null>(null)
-const form = reactive({ title: '', content: '', start_time: '', end_time: '' })
+const form = reactive({
+  title: '',
+  content: '',
+  start_time_local: '',
+  end_time_local: ''
+})
+
+// 转换 datetime-local 值为 YYYY-MM-DD HH:MM:SS
+const convertToDateTime = (localValue: string): string => {
+  if (!localValue) return ''
+  return localValue.replace('T', ' ') + ':00'
+}
+
+const formatDateTime = (dateStr: string) => {
+  if (!dateStr) return '-'
+  return dateStr.replace(' ', 'T').slice(0, 16)
+}
 
 const openCreateModal = () => {
   modalTitle.value = '发布公告'
   editingId.value = null
   form.title = ''
   form.content = ''
-  form.start_time = ''
-  form.end_time = ''
+  form.start_time_local = ''
+  form.end_time_local = ''
   modalVisible.value = true
 }
+
 const openEditModal = (ann: any) => {
   modalTitle.value = '编辑公告'
   editingId.value = ann.announcement_id
   form.title = ann.title
   form.content = ann.content
-  form.start_time = ann.start_time || ''
-  form.end_time = ann.end_time || ''
+  if (ann.start_time) form.start_time_local = ann.start_time.slice(0, 16).replace(' ', 'T')
+  else form.start_time_local = ''
+  if (ann.end_time) form.end_time_local = ann.end_time.slice(0, 16).replace(' ', 'T')
+  else form.end_time_local = ''
   modalVisible.value = true
 }
+
 const submitAnnouncement = async () => {
   if (!form.title.trim() || !form.content.trim()) {
     alert('请填写标题和内容')
     return
   }
+
+  const payload: any = {
+    title: form.title,
+    content: form.content,
+  }
+  if (form.start_time_local) {
+    payload.start_time = convertToDateTime(form.start_time_local)
+  }
+  if (form.end_time_local) {
+    payload.end_time = convertToDateTime(form.end_time_local)
+  }
+
   try {
     if (editingId.value) {
       const idx = announcements.value.findIndex(a => a.announcement_id === editingId.value)
       if (idx !== -1) {
-        announcements.value[idx] = { ...announcements.value[idx], ...form }
+        announcements.value[idx] = { ...announcements.value[idx], ...payload }
+        alert('公告已更新（模拟）')
       }
-      alert('公告已更新（模拟）')
     } else {
-      await publishAnnouncement({ title: form.title, content: form.content, start_time: form.start_time, end_time: form.end_time })
+      await publishAnnouncement(payload)
       alert('公告发布成功')
     }
     modalVisible.value = false
     await fetchAnnouncements()
-  } catch (e) {
-    showApiError(e, '操作失败')
+    if (announcements.value.length === 0) {
+      alert('发布成功但列表为空，这可能是因为公告设置了未来的开始时间或已过期。建议不填写时间字段，让公告永久有效。')
+    }
+  } catch (e: any) {
+    const msg = e.response?.data?.message || e.message || '操作失败'
+    alert(msg)
   }
 }
+
 const removeAnnouncement = async (id: number) => {
   if (!confirm('确定删除该公告吗？')) return
   try {
@@ -133,6 +168,7 @@ const removeAnnouncement = async (id: number) => {
     showApiError(e, '删除失败')
   }
 }
+
 const goToPage = (p: number) => {
   currentPage.value = p
   fetchAnnouncements()
